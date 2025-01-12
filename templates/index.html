@@ -15,7 +15,7 @@
     <h1>Button Configurations</h1>
     <ul>
         {% for button_config in button_configs %}
-            <li>Key {{ button_config.key }}: {{ button_config.text }} (Style: {{ button_config.style }})</li>
+            <li><a href="{{ url_for('edit_button_config', key=button_config.key) }}">Key {{ button_config.key }}</a>: {{ button_config.text }} (Style: {{ button_config.style }})</li>
         {% endfor %}
     </ul>
     <a href="{{ url_for('add_button_config') }}">Add Button Configuration</a>

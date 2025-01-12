@@ -62,14 +62,39 @@ def add_button_config():
         long_press = request.form['long_press']
         ack_action = request.form['ack_action']
 
-        execute_db_query('INSERT INTO button_config (key, text, style, long_press_ack_style, short_press, long_press, ack_action) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                         (key, text, style, long_press_ack_style, short_press, long_press, ack_action))
+        try:
+            execute_db_query('INSERT INTO button_config (key, text, style, long_press_ack_style, short_press, long_press, ack_action) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                             (key, text, style, long_press_ack_style, short_press, long_press, ack_action))
+        except sqlite3.IntegrityError:
+            execute_db_query('UPDATE button_config SET text = ?, style = ?, long_press_ack_style = ?, short_press = ?, long_press = ?, ack_action = ? WHERE key = ?',
+                             (text, style, long_press_ack_style, short_press, long_press, ack_action, key))
         return redirect(url_for('index'))
 
     conn = get_db_connection()
     styles = conn.execute('SELECT name FROM styles').fetchall()
     conn.close()
     return render_template('add_button_config.html', styles=styles)
+
+@app.route('/edit_button_config/<int:key>', methods=('GET', 'POST'))
+def edit_button_config(key):
+    conn = get_db_connection()
+    button_config = conn.execute('SELECT * FROM button_config WHERE key = ?', (key,)).fetchone()
+    styles = conn.execute('SELECT name FROM styles').fetchall()
+    conn.close()
+
+    if request.method == 'POST':
+        text = request.form['text']
+        style = request.form['style']
+        long_press_ack_style = request.form['long_press_ack_style']
+        short_press = request.form['short_press']
+        long_press = request.form['long_press']
+        ack_action = request.form['ack_action']
+
+        execute_db_query('UPDATE button_config SET text = ?, style = ?, long_press_ack_style = ?, short_press = ?, long_press = ?, ack_action = ? WHERE key = ?',
+                         (text, style, long_press_ack_style, short_press, long_press, ack_action, key))
+        return redirect(url_for('index'))
+
+    return render_template('edit_button_config.html', key=key, button_config=button_config, styles=styles)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)
