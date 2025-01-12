@@ -47,7 +47,7 @@ def create_highlighted_image(size, text, style, font):
         'text_color': style['highlight_text_color'],
     }, font)
 
-def load_configuration():
+def load_configuration(device_id):
     global styles, button_config, parameters, font
 
     # Connect to the SQLite database
@@ -55,7 +55,7 @@ def load_configuration():
     cursor = conn.cursor()
 
     # Fetch styles
-    cursor.execute('SELECT id, device_id, name, bg_color, text_color, highlight_bg_color, highlight_text_color, `default` FROM styles')
+    cursor.execute('SELECT id, device_id, name, bg_color, text_color, highlight_bg_color, highlight_text_color, `default` FROM styles WHERE device_id = ?', (device_id,))
     styles = {row[2]: {
         'device_id': row[1],
         'bg_color': row[3],
@@ -66,7 +66,7 @@ def load_configuration():
     } for row in cursor.fetchall()}
 
     # Fetch button configurations
-    cursor.execute('SELECT device_id, key, text, style, long_press_ack_style, short_press, long_press, ack_action FROM button_config')
+    cursor.execute('SELECT device_id, key, text, style, long_press_ack_style, short_press, long_press, ack_action FROM button_config WHERE device_id = ?', (device_id,))
     button_config = {row[1]: {
         'device_id': row[0],
         'text': row[2],
@@ -107,7 +107,7 @@ def stop_program():
     input("Press X to stop the program...\n")
     stop_flag.set()
 
-def listen_for_updates():
+def listen_for_updates(device_id):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind(('localhost', 65432))
         s.listen()
@@ -116,7 +116,7 @@ def listen_for_updates():
             with conn:
                 data = conn.recv(1024)
                 if data == b'update':
-                    load_configuration()
+                    load_configuration(device_id)
                     print("Configuration reloaded")
                 else:
                     handle_command(data.decode())
@@ -133,13 +133,36 @@ def handle_command(command):
 
 try:
     threading.Thread(target=stop_program).start()  # Start the stop program thread
-    threading.Thread(target=listen_for_updates).start()  # Start the update listener thread
 
     deck = DeviceManager.DeviceManager().enumerate()[0]
     deck.open()
     deck.reset()
 
-    load_configuration()  # Load configuration before running the startup sequence
+    # Get device details
+    device_model = deck.deck_type()
+    device_serial_number = deck.get_serial_number()
+
+    # Connect to the SQLite database
+    conn = sqlite3.connect('streamdeck.db')
+    cursor = conn.cursor()
+
+    # Check if the device is already in the database
+    cursor.execute('SELECT id FROM devices WHERE serial_number = ?', (device_serial_number,))
+    device = cursor.fetchone()
+
+    if device is None:
+        # Insert the device into the database
+        cursor.execute('INSERT INTO devices (model, serial_number) VALUES (?, ?)', (device_model, device_serial_number))
+        conn.commit()
+        device_id = cursor.lastrowid
+    else:
+        device_id = device[0]
+
+    conn.close()
+
+    threading.Thread(target=listen_for_updates, args=(device_id,)).start()  # Start the update listener thread
+
+    load_configuration(device_id)  # Load configuration before running the startup sequence
 
     # Run the startup sequence
     startup_sequence.run_startup_sequence(deck, styles)
