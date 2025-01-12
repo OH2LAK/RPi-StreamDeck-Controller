@@ -16,6 +16,18 @@
                 <option value="{{ style.name }}">{{ style.name }}</option>
             {% endfor %}
         </select><br>
+        <label for="long_press_ack_style">Long Press Ack Style:</label>
+        <select id="long_press_ack_style" name="long_press_ack_style">
+            {% for style in styles %}
+                <option value="{{ style.name }}">{{ style.name }}</option>
+            {% endfor %}
+        </select><br>
+        <label for="short_press">Short Press Action:</label>
+        <input type="text" id="short_press" name="short_press"><br>
+        <label for="long_press">Long Press Action:</label>
+        <input type="text" id="long_press" name="long_press"><br>
+        <label for="ack_action">Ack Action:</label>
+        <input type="text" id="ack_action" name="ack_action"><br>
         <input type="submit" value="Add Button Configuration">
     </form>
     <a href="{{ url_for('index') }}">Back</a>

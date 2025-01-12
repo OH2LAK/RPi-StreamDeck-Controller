@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for
 import sqlite3
 from PIL import ImageFont
+import time
 
 app = Flask(__name__)
 
@@ -8,6 +9,22 @@ def get_db_connection():
     conn = sqlite3.connect('streamdeck.db')
     conn.row_factory = sqlite3.Row
     return conn
+
+def execute_db_query(query, params):
+    retries = 5
+    while retries > 0:
+        try:
+            conn = get_db_connection()
+            conn.execute(query, params)
+            conn.commit()
+            conn.close()
+            break
+        except sqlite3.OperationalError as e:
+            if 'database is locked' in str(e):
+                retries -= 1
+                time.sleep(1)
+            else:
+                raise
 
 @app.route('/')
 def index():
@@ -28,11 +45,8 @@ def add_style():
         highlight_bg_color = request.form['highlight_bg_color']
         highlight_text_color = request.form['highlight_text_color']
 
-        conn = get_db_connection()
-        conn.execute('INSERT INTO styles (name, bg_color, text_color, font_path, font_size, highlight_bg_color, highlight_text_color) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                     (name, bg_color, text_color, font_path, font_size, highlight_bg_color, highlight_text_color))
-        conn.commit()
-        conn.close()
+        execute_db_query('INSERT INTO styles (name, bg_color, text_color, font_path, font_size, highlight_bg_color, highlight_text_color) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                         (name, bg_color, text_color, font_path, font_size, highlight_bg_color, highlight_text_color))
         return redirect(url_for('index'))
 
     return render_template('add_style.html')
@@ -43,11 +57,13 @@ def add_button_config():
         key = request.form['key']
         text = request.form['text']
         style = request.form['style']
+        long_press_ack_style = request.form['long_press_ack_style']
+        short_press = request.form['short_press']
+        long_press = request.form['long_press']
+        ack_action = request.form['ack_action']
 
-        conn = get_db_connection()
-        conn.execute('INSERT INTO button_config (key, text, style) VALUES (?, ?, ?)', (key, text, style))
-        conn.commit()
-        conn.close()
+        execute_db_query('INSERT INTO button_config (key, text, style, long_press_ack_style, short_press, long_press, ack_action) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                         (key, text, style, long_press_ack_style, short_press, long_press, ack_action))
         return redirect(url_for('index'))
 
     conn = get_db_connection()
