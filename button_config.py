@@ -4,7 +4,7 @@ button_config = {
     0: {
         "style": "default",
         "long_press_ack_style": "long_press_ack",
-        "text": "Button 0",  # Configurable text
+        "text": "Butt0n\n0",  # Configurable text
         "short_press": "short_action_0",
         "long_press": "long_action_0",
         "ack_action": "ack_action_0"
@@ -42,7 +42,7 @@ button_config = {
         "ack_action": "ack_action_4"
     },
     5: {
-        "style": "default",
+        "style": "style1",
         "long_press_ack_style": "long_press_ack",
         "text": "Button 5",  # Configurable text
         "short_press": "short_action_5",
@@ -50,7 +50,7 @@ button_config = {
         "ack_action": "ack_action_5"
     },
     6: {
-        "style": "default",
+        "style": "style1",
         "long_press_ack_style": "long_press_ack",
         "text": "Button 6",  # Configurable text
         "short_press": "short_action_6",
@@ -58,7 +58,7 @@ button_config = {
         "ack_action": "ack_action_6"
     },
     7: {
-        "style": "default",
+        "style": "style1",
         "long_press_ack_style": "long_press_ack",
         "text": "Button 7",  # Configurable text
         "short_press": "short_action_7",
@@ -66,7 +66,7 @@ button_config = {
         "ack_action": "ack_action_7"
     },
     8: {
-        "style": "default",
+        "style": "style1",
         "long_press_ack_style": "long_press_ack",
         "text": "Button 8",  # Configurable text
         "short_press": "short_action_8",
@@ -74,7 +74,7 @@ button_config = {
         "ack_action": "ack_action_8"
     },
     9: {
-        "style": "default",
+        "style": "style1",
         "long_press_ack_style": "long_press_ack",
         "text": "Button 9",  # Configurable text
         "short_press": "short_action_9",
@@ -114,9 +114,9 @@ button_config = {
         "ack_action": "ack_action_13"
     },
     14: {
-        "style": "default",
+        "style": "red_button",
         "long_press_ack_style": "long_press_ack",
-        "text": "Button 14",  # Configurable text
+        "text": "PANIK!",  # Configurable text
         "short_press": "short_action_14",
         "long_press": "long_action_14",
         "ack_action": "ack_action_14"
