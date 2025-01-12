@@ -56,4 +56,4 @@ def add_button_config():
     return render_template('add_button_config.html', styles=styles)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', debug=True)
