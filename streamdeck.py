@@ -77,6 +77,11 @@ def load_configuration(device_id):
         'ack_action': row[7]
     } for row in cursor.fetchall()}
 
+    # Debugging: Print button_config
+    print("Button Configurations Loaded:")
+    for key, config in button_config.items():
+        print(f"Key {key}: {config}")
+
     # Fetch parameters
     cursor.execute('SELECT name, value FROM parameters')
     parameters = {row[0]: row[1] for row in cursor.fetchall()}
