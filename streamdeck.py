@@ -42,7 +42,10 @@ def create_image(size, text, style, line_spacing=10):
         draw.text(text_position, line, font=style['font'], fill=style['text_color'])
         current_y += text_bbox[3] - text_bbox[1] + line_spacing
     
-    # Save the image without any transformations
+    # Flip the image horizontally before saving
+    image = image.transpose(Image.FLIP_LEFT_RIGHT)
+    
+    # Save the flipped image
     image_bytes = io.BytesIO()
     image.save(image_bytes, format='BMP')
     return image_bytes.getvalue()
