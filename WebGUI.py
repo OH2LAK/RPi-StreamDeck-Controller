@@ -27,6 +27,11 @@ def execute_db_query(query, params):
             else:
                 raise
 
+def send_update_signal():
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.connect(('localhost', 65432))
+        s.sendall(b'update')
+
 @app.route('/')
 def index():
     conn = get_db_connection()
@@ -49,6 +54,7 @@ def add_style():
 
         execute_db_query('INSERT INTO styles (name, bg_color, text_color, font_path, font_size, highlight_bg_color, highlight_text_color) VALUES (?, ?, ?, ?, ?, ?, ?)',
                          (name, bg_color, text_color, font_path, font_size, highlight_bg_color, highlight_text_color))
+        send_update_signal()
         return redirect(url_for('index'))
 
     return render_template('add_style.html')
@@ -69,6 +75,7 @@ def edit_style(name):
 
         execute_db_query('UPDATE styles SET bg_color = ?, text_color = ?, font_path = ?, font_size = ?, highlight_bg_color = ?, highlight_text_color = ? WHERE name = ?',
                          (bg_color, text_color, font_path, font_size, highlight_bg_color, highlight_text_color, name))
+        send_update_signal()
         return redirect(url_for('index'))
 
     return render_template('edit_style.html', style=style)
@@ -90,6 +97,7 @@ def add_button_config():
         except sqlite3.IntegrityError:
             execute_db_query('UPDATE button_config SET text = ?, style = ?, long_press_ack_style = ?, short_press = ?, long_press = ?, ack_action = ? WHERE key = ?',
                              (text, style, long_press_ack_style, short_press, long_press, ack_action, key))
+        send_update_signal()
         return redirect(url_for('index'))
 
     conn = get_db_connection()
@@ -114,6 +122,7 @@ def edit_button_config(key):
 
         execute_db_query('UPDATE button_config SET text = ?, style = ?, long_press_ack_style = ?, short_press = ?, long_press = ?, ack_action = ? WHERE key = ?',
                          (text, style, long_press_ack_style, short_press, long_press, ack_action, key))
+        send_update_signal()
         return redirect(url_for('index'))
 
     return render_template('edit_button_config.html', key=key, button_config=button_config, styles=styles)
@@ -127,6 +136,7 @@ def edit_parameter(name):
     if request.method == 'POST':
         value = request.form['value']
         execute_db_query('UPDATE parameters SET value = ? WHERE name = ?', (value, name))
+        send_update_signal()
         return redirect(url_for('index'))
 
     return render_template('edit_parameter.html', parameter=parameter)
