@@ -8,6 +8,7 @@ import sqlite3
 import threading
 import socket
 import netifaces
+import requests
 from flask import Flask, jsonify
 
 # Ensure the script's directory is in the Python path
