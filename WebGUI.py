@@ -1,8 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for
 import sqlite3
-from PIL import ImageFont
-import time
 import socket
+import time
 
 app = Flask(__name__)
 
@@ -11,21 +10,11 @@ def get_db_connection():
     conn.row_factory = sqlite3.Row
     return conn
 
-def execute_db_query(query, params):
-    retries = 5
-    while retries > 0:
-        try:
-            conn = get_db_connection()
-            conn.execute(query, params)
-            conn.commit()
-            conn.close()
-            break
-        except sqlite3.OperationalError as e:
-            if 'database is locked' in str(e):
-                retries -= 1
-                time.sleep(1)
-            else:
-                raise
+def execute_db_query(query, args=()):
+    conn = get_db_connection()
+    conn.execute(query, args)
+    conn.commit()
+    conn.close()
 
 def send_update_signal():
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -66,6 +55,7 @@ def add_style():
 def edit_style(id):
     conn = get_db_connection()
     style = conn.execute('SELECT * FROM styles WHERE id = ?', (id,)).fetchone()
+    device = conn.execute('SELECT * FROM devices LIMIT 1').fetchone()
     conn.close()
 
     if request.method == 'POST':
@@ -79,7 +69,7 @@ def edit_style(id):
         send_update_signal()
         return redirect(url_for('index'))
 
-    return render_template('edit_style.html', style=style)
+    return render_template('edit_style.html', style=style, device=device)
 
 @app.route('/delete_style/<int:id>', methods=('POST',))
 def delete_style(id):
@@ -158,4 +148,4 @@ def edit_parameter(id):
     return render_template('edit_parameter.html', parameter=parameter)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug=True)
+    app.run(host='0.0.0.0', port=5000)

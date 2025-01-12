@@ -7,6 +7,7 @@ import io
 import sqlite3
 import threading
 import socket
+import netifaces
 
 # Ensure the script's directory is in the Python path
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -46,6 +47,26 @@ def create_highlighted_image(size, text, style, font):
         'bg_color': style['highlight_bg_color'],
         'text_color': style['highlight_text_color'],
     }, font)
+
+def get_ip_address():
+    gws = netifaces.gateways()
+    default_interface = gws['default'][netifaces.AF_INET][1]
+    ip_address = netifaces.ifaddresses(default_interface)[netifaces.AF_INET][0]['addr']
+    return ip_address
+
+def display_configuration_message(deck, font):
+    message = "USE WEB GUI TO CONFIGURE"
+    ip_address = get_ip_address()
+    ip_parts = ip_address.split('.')
+
+    for i in range(6):
+        image = create_image(deck.key_image_format()['size'], message.split()[i], {'bg_color': '#000000', 'text_color': '#FFFFFF'}, font)
+        deck.set_key_image(i, image)
+
+    deck.set_key_image(6, create_image(deck.key_image_format()['size'], "IP", {'bg_color': '#000000', 'text_color': '#FFFFFF'}, font))
+    deck.set_key_image(7, create_image(deck.key_image_format()['size'], "address", {'bg_color': '#000000', 'text_color': '#FFFFFF'}, font))
+    for i in range(4):
+        deck.set_key_image(8 + i, create_image(deck.key_image_format()['size'], ip_parts[i], {'bg_color': '#000000', 'text_color': '#FFFFFF'}, font))
 
 def insert_default_configuration(device_id):
     conn = sqlite3.connect('streamdeck.db')
@@ -169,6 +190,14 @@ def handle_command(command):
             deck.set_key_image(key, images[key][image_type])
             print(f"Set key {key} image to {image_type}")
 
+def check_for_configuration_update(device_id):
+    conn = sqlite3.connect('streamdeck.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT COUNT(*) FROM button_config WHERE device_id = ?', (device_id,))
+    count = cursor.fetchone()[0]
+    conn.close()
+    return count > 0
+
 try:
     threading.Thread(target=stop_program).start()  # Start the stop program thread
 
@@ -197,37 +226,36 @@ try:
         conn.commit()
         device_id = cursor.lastrowid
 
-        # Insert default configuration for the new device
-        insert_default_configuration(device_id)
-        print(f"Inserted default configuration for new device: {device_model} (S/N: {device_serial_number})")
+        # Display configuration message
+        font = ImageFont.truetype("arial.ttf", 14)  # Adjust font path and size as needed
+        display_configuration_message(deck, font)
+        print(f"Inserted new device: {device_model} (S/N: {device_serial_number}). Displaying configuration message.")
     else:
         device_id = device[0]
         print(f"Loaded existing configuration for device: {device_model} (S/N: {device_serial_number})")
 
-    conn.close()
+        threading.Thread(target=listen_for_updates, args=(device_id,)).start()  # Start the update listener thread
 
-    threading.Thread(target=listen_for_updates, args=(device_id,)).start()  # Start the update listener thread
+        load_configuration(device_id)  # Load configuration before running the startup sequence
 
-    load_configuration(device_id)  # Load configuration before running the startup sequence
+        # Run the startup sequence
+        startup_sequence.run_startup_sequence(deck, styles)
 
-    # Run the startup sequence
-    startup_sequence.run_startup_sequence(deck, styles)
-
-    for key in range(deck.key_count()):
-        if key not in button_config:
-            print(f"Key {key} not found in button_config")
-            continue
-        style_name = button_config[key]['style']
-        style = styles[style_name]
-        original_image = create_image(deck.key_image_format()['size'], button_config[key]['text'], style, font)
-        highlighted_image = create_highlighted_image(deck.key_image_format()['size'], button_config[key]['text'], style, font)
-        long_press_ack_image = create_image(deck.key_image_format()['size'], button_config[key]['text'], styles['long_press_ack'], font)
-        images[key] = {
-            'original': original_image,
-            'highlighted': highlighted_image,
-            'long_press_ack': long_press_ack_image
-        }
-        deck.set_key_image(key, original_image)
+        for key in range(deck.key_count()):
+            if key not in button_config:
+                print(f"Key {key} not found in button_config")
+                continue
+            style_name = button_config[key]['style']
+            style = styles[style_name]
+            original_image = create_image(deck.key_image_format()['size'], button_config[key]['text'], style, font)
+            highlighted_image = create_highlighted_image(deck.key_image_format()['size'], button_config[key]['text'], style, font)
+            long_press_ack_image = create_image(deck.key_image_format()['size'], button_config[key]['text'], styles['long_press_ack'], font)
+            images[key] = {
+                'original': original_image,
+                'highlighted': highlighted_image,
+                'long_press_ack': long_press_ack_image
+            }
+            deck.set_key_image(key, original_image)
     
     def key_change(deck, key, state):
         if state:
@@ -264,6 +292,11 @@ try:
                     deck.set_key_image(key, images[key]['original'])
                     long_press_ack_keys.remove(key)
             time.sleep(0.1)  # Small sleep to prevent high CPU usage
+
+            # Check for configuration update
+            if check_for_configuration_update(device_id):
+                load_configuration(device_id)
+                print("Configuration updated and reloaded.")
     
     deck.set_key_callback(key_change)
     main_loop()

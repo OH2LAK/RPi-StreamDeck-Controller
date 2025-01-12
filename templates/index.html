@@ -1,38 +1,75 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
 <head>
-    <title>StreamDeck Configurations</title>
+    <title>StreamDeck Configuration</title>
 </head>
 <body>
-    <h1>Device</h1>
-    <p>{{ device.model }} (S/N: {{ device.serial_number }})</p>
+    <h1>StreamDeck Configuration</h1>
+    <h2>Device Information</h2>
+    <p>Model: {{ device['model'] }}</p>
+    <p>Serial Number: {{ device['serial_number'] }}</p>
 
-    <h1>Styles</h1>
-    <ul>
+    <h2>Styles</h2>
+    <table>
+        <tr>
+            <th>Name</th>
+            <th>Background Color</th>
+            <th>Text Color</th>
+            <th>Highlight Background Color</th>
+            <th>Highlight Text Color</th>
+            <th>Actions</th>
+        </tr>
         {% for style in styles %}
-            <li>
-                <a href="{{ url_for('edit_style', id=style.id) }}">{{ style.name }}</a>: {{ style.bg_color }}, {{ style.text_color }}, {{ style.highlight_bg_color }}, {{ style.highlight_text_color }}
-                <form action="{{ url_for('delete_style', id=style.id) }}" method="post" style="display:inline;">
-                    <input type="submit" value="Delete" onclick="return confirm('Are you sure you want to delete this style?');">
-                </form>
-            </li>
+        <tr>
+            <td>{{ style['name'] }}</td>
+            <td>{{ style['bg_color'] }}</td>
+            <td>{{ style['text_color'] }}</td>
+            <td>{{ style['highlight_bg_color'] }}</td>
+            <td>{{ style['highlight_text_color'] }}</td>
+            <td>
+                <a href="{{ url_for('edit_style', id=style['id']) }}">Edit</a>
+            </td>
+        </tr>
         {% endfor %}
-    </ul>
+    </table>
     <a href="{{ url_for('add_style') }}">Add Style</a>
 
-    <h1>Button Configurations</h1>
-    <ul>
+    <h2>Button Configurations</h2>
+    <table>
+        <tr>
+            <th>Key</th>
+            <th>Text</th>
+            <th>Style</th>
+            <th>Long Press Ack Style</th>
+            <th>Short Press</th>
+            <th>Long Press</th>
+            <th>Ack Action</th>
+        </tr>
         {% for button_config in button_configs %}
-            <li><a href="{{ url_for('edit_button_config', id=button_config.id) }}">Key {{ button_config.key }}</a>: {{ button_config.text }} (Style: {{ button_config.style }})</li>
+        <tr>
+            <td>{{ button_config['key'] }}</td>
+            <td>{{ button_config['text'] }}</td>
+            <td>{{ button_config['style'] }}</td>
+            <td>{{ button_config['long_press_ack_style'] }}</td>
+            <td>{{ button_config['short_press'] }}</td>
+            <td>{{ button_config['long_press'] }}</td>
+            <td>{{ button_config['ack_action'] }}</td>
+        </tr>
         {% endfor %}
-    </ul>
-    <a href="{{ url_for('add_button_config') }}">Add Button Configuration</a>
+    </table>
 
-    <h1>Parameters</h1>
-    <ul>
+    <h2>Parameters</h2>
+    <table>
+        <tr>
+            <th>Name</th>
+            <th>Value</th>
+        </tr>
         {% for parameter in parameters %}
-            <li><a href="{{ url_for('edit_parameter', id=parameter.id) }}">{{ parameter.name }}</a>: {{ parameter.value }}</li>
+        <tr>
+            <td>{{ parameter['name'] }}</td>
+            <td>{{ parameter['value'] }}</td>
+        </tr>
         {% endfor %}
-    </ul>
+    </table>
 </body>
 </html>
