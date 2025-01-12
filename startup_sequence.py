@@ -41,7 +41,7 @@ def show_startup_sequence(deck, styles):
         10: "Author:",
         11: "Erik Finskas\nOH2LAK",
         13: "Version:",
-        14: "2025\n 0112"
+        14: "2025\n 0113"
     }
 
     for key in range(deck.key_count()):
