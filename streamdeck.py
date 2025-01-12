@@ -83,6 +83,20 @@ def load_configuration():
     # Close the database connection
     conn.close()
 
+    # Update button images
+    for key in range(deck.key_count()):
+        style_name = button_config[key]['style']
+        style = styles[style_name]
+        original_image = create_image(deck.key_image_format()['size'], button_config[key]['text'], style)
+        highlighted_image = create_highlighted_image(deck.key_image_format()['size'], button_config[key]['text'], style)
+        long_press_ack_image = create_image(deck.key_image_format()['size'], button_config[key]['text'], styles['long_press_ack'])
+        images[key] = {
+            'original': original_image,
+            'highlighted': highlighted_image,
+            'long_press_ack': long_press_ack_image
+        }
+        deck.set_key_image(key, original_image)
+
 def stop_program():
     input("Press X to stop the program...\n")
     stop_flag.set()
