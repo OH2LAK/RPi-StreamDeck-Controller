@@ -19,5 +19,12 @@
         {% endfor %}
     </ul>
     <a href="{{ url_for('add_button_config') }}">Add Button Configuration</a>
+
+    <h1>Parameters</h1>
+    <ul>
+        {% for parameter in parameters %}
+            <li><a href="{{ url_for('edit_parameter', name=parameter.name) }}">{{ parameter.name }}</a>: {{ parameter.value }}</li>
+        {% endfor %}
+    </ul>
 </body>
 </html>

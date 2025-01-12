@@ -28,6 +28,18 @@ INSERT OR IGNORE INTO button_config (key, text, style, long_press_ack_style, sho
 VALUES (?, ?, ?, ?, ?, ?, ?)
 ''', button_config_data)
 
+# Insert parameters data
+parameters_data = [
+    ('short_press_duration', 0.2),
+    ('long_press_duration', 1.0),
+    # Add more parameters as needed
+]
+
+cursor.executemany('''
+INSERT OR IGNORE INTO parameters (name, value)
+VALUES (?, ?)
+''', parameters_data)
+
 # Commit changes and close the connection
 conn.commit()
 conn.close()

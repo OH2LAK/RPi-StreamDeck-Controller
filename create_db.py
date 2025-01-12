@@ -34,6 +34,15 @@ CREATE TABLE IF NOT EXISTS button_config (
 )
 ''')
 
+# Create parameters table
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS parameters (
+    id INTEGER PRIMARY KEY,
+    name TEXT UNIQUE,
+    value REAL
+)
+''')
+
 # Commit changes and close the connection
 conn.commit()
 conn.close()
