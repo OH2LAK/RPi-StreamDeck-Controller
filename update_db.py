@@ -4,8 +4,13 @@ import sqlite3
 conn = sqlite3.connect('streamdeck.db')
 cursor = conn.cursor()
 
-# Add the `default` column to the styles table
-cursor.execute('ALTER TABLE styles ADD COLUMN `default` INTEGER DEFAULT 0')
+# Check if the `default` column exists
+cursor.execute("PRAGMA table_info(styles)")
+columns = [column[1] for column in cursor.fetchall()]
+
+# Add the `default` column if it doesn't exist
+if 'default' not in columns:
+    cursor.execute('ALTER TABLE styles ADD COLUMN `default` INTEGER DEFAULT 0')
 
 # Set the default style
 cursor.execute('UPDATE styles SET `default` = 1 WHERE name = "default"')
