@@ -1,0 +1,9 @@
+
+### `requirements.txt`
+
+The `requirements.txt` file is typically used for pip installations, but since we're using APT, the content of this file is not necessary for the APT installation process. However, for reference, here is what it would contain if you were using pip:
+
+```txt
+Flask
+Pillow
+StreamDeck

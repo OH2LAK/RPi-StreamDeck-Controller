@@ -2,9 +2,9 @@
 > This program is just in its baby steps. Only basic communication between the controller and StreamDeck and behavior control of the buttons have been implemented.
 > Next task is to implement the support for all kind of actions based on button press.
 
-# Python StreamDeck Controller for Raspberry Pi Zero W
+# RPi-StreamDeck-Controller
 
-A Python script to control a StreamDeck device with customizable button styles and actions. The controller is to sit in a Raspberry Pi Zero W miniature computer which can be attached to the back of the StreamDeck device.
+This project is designed to control a StreamDeck device using a Raspberry Pi. It includes a web GUI for managing styles and button configurations stored in an SQLite database.
 
 ## Description
 
@@ -20,9 +20,18 @@ This project is being developed on a **Raspberry Pi Zero W** with the following 
 ## Files
 
 - `streamdeck.py`: Main script to run the StreamDeck controller.
-- `styles.py`: Defines button styles (background color, text color, font, etc.).
-- `button_config.py`: Defines button-specific styles and actions (short press, long press, acknowledgment).
-- `parameters.py`: Defines general parameters (short press duration, long press duration).
+- `WebGUI.py`: Flask application for managing styles and button configurations.
+- `create_db.py`: Script to create the SQLite database and tables.
+- `insert_data.py`: Script to insert initial data into the database.
+- `templates/`: Directory containing HTML templates for the Flask web GUI.
+  - `index.html`: Main page listing styles and button configurations.
+  - `add_style.html`: Form to add a new style.
+  - `add_button_config.html`: Form to add a new button configuration.
+- `static/`: Directory for static files (e.g., CSS, JavaScript).
+  - `css/`: Directory for CSS files.
+    - `styles.css`: Optional CSS file for custom styles.
+- `streamdeck.db`: The SQLite database file.
+- `requirements.txt`: List of Python dependencies (e.g., Flask, Pillow, StreamDeck).
 
 ## Dependencies
 
@@ -30,14 +39,58 @@ The following packages are required and should be installed via APT:
 - `python3`
 - `python3-pip`
 - `python3-pil` (Pillow library for image processing)
-- `streamdeck` (Library to interact with the StreamDeck device)
+- `python3-flask` (Flask web framework)
 - `python3-setuptools`
+- `libhidapi-libusb0` (HIDAPI library for StreamDeck)
+- `libhidapi-hidraw0` (HIDAPI library for StreamDeck)
+- `libusb-1.0-0-dev` (USB library for StreamDeck)
+- `python3-elgato-streamdeck` (Python 3 library to control an Elgato Stream Deck)
 
 For installing these packages, you can use the following command:
 ```sh
-sudo apt-get install python3 python3-pip python3-pil python3-setuptools
-pip3 install streamdeck
+sudo apt update
+sudo apt install python3 python3-pip python3-pil python3-flask python3-setuptools libhidapi-libusb0 libhidapi-hidraw0 libusb-1.0-0-dev python3-elgato-streamdeck
 ```
+
+## Requirements
+
+- Python 3.x
+- Flask
+- Pillow
+- StreamDeck
+
+## Installation
+
+1. **Clone the repository:**
+
+   ```sh
+   git clone https://github.com/OH2LAK/RPi-StreamDeck-Controller.git
+   cd RPi-StreamDeck-Controller
+```
+2. **Install the required packages using APT:**
+   ```sh
+sudo apt update
+sudo apt install python3 python3-pip python3-pil python3-flask python3-setuptools libhidapi-libusb0 libhidapi-hidraw0 libusb-1.0-0-dev python3-elgato-streamdeck
+```
+## Setting up the database
+1. **Create the SQLite database and tables:**
+```sh
+python3 create_db.py
+```
+
+2. **Insert initial data into the database:**
+```sh
+python3 insert_data.py
+```
+
+## Running the Flask Web GUI
+1. **Start the Flask application:**
+```sh
+python3 WebGUI.py
+```
+
+1. **Access the web GUI:**
+Open your web browser and go to ```http://127.0.0.1:5000/```
 
 ## Configuration
 
