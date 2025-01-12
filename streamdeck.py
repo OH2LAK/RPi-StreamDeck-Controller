@@ -11,6 +11,8 @@ import threading
 script_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(script_dir)
 
+import startup_sequence  # Import startup sequence
+
 # Store images for each key and state
 images = {}
 key_press_times = {}  # Store the time when a key was pressed
@@ -88,6 +90,9 @@ try:
     threading.Thread(target=stop_program).start()  # Start the stop program thread
 
     deck.reset()
+
+    # Run the startup sequence
+    startup_sequence.run_startup_sequence(deck, styles)
 
     for key in range(deck.key_count()):
         style_name = button_config[key]['style']
