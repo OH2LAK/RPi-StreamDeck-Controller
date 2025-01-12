@@ -4,32 +4,45 @@ import sqlite3
 conn = sqlite3.connect('streamdeck.db')
 cursor = conn.cursor()
 
-# Create styles table with a default column
+# Create devices table
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS devices (
+    id INTEGER PRIMARY KEY,
+    model TEXT,
+    serial_number TEXT UNIQUE
+)
+''')
+
+# Create styles table with a device_id column
 cursor.execute('''
 CREATE TABLE IF NOT EXISTS styles (
     id INTEGER PRIMARY KEY,
-    name TEXT UNIQUE,
+    device_id INTEGER,
+    name TEXT,
     bg_color TEXT,
     text_color TEXT,
     font_path TEXT,
     font_size INTEGER,
     highlight_bg_color TEXT,
     highlight_text_color TEXT,
-    default INTEGER DEFAULT 0
+    default INTEGER DEFAULT 0,
+    FOREIGN KEY(device_id) REFERENCES devices(id)
 )
 ''')
 
-# Create button_config table
+# Create button_config table with a device_id column
 cursor.execute('''
 CREATE TABLE IF NOT EXISTS button_config (
     id INTEGER PRIMARY KEY,
-    key INTEGER UNIQUE,
+    device_id INTEGER,
+    key INTEGER,
     text TEXT,
     style TEXT,
     long_press_ack_style TEXT,
     short_press TEXT,
     long_press TEXT,
     ack_action TEXT,
+    FOREIGN KEY(device_id) REFERENCES devices(id),
     FOREIGN KEY(style) REFERENCES styles(name),
     FOREIGN KEY(long_press_ack_style) REFERENCES styles(name)
 )

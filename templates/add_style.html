@@ -6,6 +6,12 @@
 <body>
     <h1>Add Style</h1>
     <form method="post">
+        <label for="device_id">Device:</label>
+        <select id="device_id" name="device_id">
+            {% for device in devices %}
+                <option value="{{ device.id }}">{{ device.model }} (S/N: {{ device.serial_number }})</option>
+            {% endfor %}
+        </select><br>
         <label for="name">Name:</label>
         <input type="text" id="name" name="name"><br>
         <label for="bg_color">Background Color:</label>

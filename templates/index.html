@@ -4,12 +4,19 @@
     <title>StreamDeck Configurations</title>
 </head>
 <body>
+    <h1>Devices</h1>
+    <ul>
+        {% for device in devices %}
+            <li>{{ device.model }} (S/N: {{ device.serial_number }})</li>
+        {% endfor %}
+    </ul>
+
     <h1>Styles</h1>
     <ul>
         {% for style in styles %}
             <li>
-                <a href="{{ url_for('edit_style', name=style.name) }}">{{ style.name }}</a>: {{ style.bg_color }}, {{ style.text_color }}, {{ style.font_path }}, {{ style.font_size }}, {{ style.highlight_bg_color }}, {{ style.highlight_text_color }}
-                <form action="{{ url_for('delete_style', name=style.name) }}" method="post" style="display:inline;">
+                <a href="{{ url_for('edit_style', id=style.id) }}">{{ style.name }}</a>: {{ style.bg_color }}, {{ style.text_color }}, {{ style.font_path }}, {{ style.font_size }}, {{ style.highlight_bg_color }}, {{ style.highlight_text_color }}
+                <form action="{{ url_for('delete_style', id=style.id) }}" method="post" style="display:inline;">
                     <input type="submit" value="Delete" onclick="return confirm('Are you sure you want to delete this style?');">
                 </form>
             </li>
@@ -20,7 +27,7 @@
     <h1>Button Configurations</h1>
     <ul>
         {% for button_config in button_configs %}
-            <li><a href="{{ url_for('edit_button_config', key=button_config.key) }}">Key {{ button_config.key }}</a>: {{ button_config.text }} (Style: {{ button_config.style }})</li>
+            <li><a href="{{ url_for('edit_button_config', id=button_config.id) }}">Key {{ button_config.key }}</a>: {{ button_config.text }} (Style: {{ button_config.style }})</li>
         {% endfor %}
     </ul>
     <a href="{{ url_for('add_button_config') }}">Add Button Configuration</a>
@@ -28,7 +35,7 @@
     <h1>Parameters</h1>
     <ul>
         {% for parameter in parameters %}
-            <li><a href="{{ url_for('edit_parameter', name=parameter.name) }}">{{ parameter.name }}</a>: {{ parameter.value }}</li>
+            <li><a href="{{ url_for('edit_parameter', id=parameter.id) }}">{{ parameter.name }}</a>: {{ parameter.value }}</li>
         {% endfor %}
     </ul>
 

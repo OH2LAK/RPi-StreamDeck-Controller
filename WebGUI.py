@@ -35,15 +35,17 @@ def send_update_signal():
 @app.route('/')
 def index():
     conn = get_db_connection()
+    devices = conn.execute('SELECT * FROM devices').fetchall()
     styles = conn.execute('SELECT * FROM styles').fetchall()
     button_configs = conn.execute('SELECT * FROM button_config').fetchall()
     parameters = conn.execute('SELECT * FROM parameters').fetchall()
     conn.close()
-    return render_template('index.html', styles=styles, button_configs=button_configs, parameters=parameters)
+    return render_template('index.html', devices=devices, styles=styles, button_configs=button_configs, parameters=parameters)
 
 @app.route('/add_style', methods=('GET', 'POST'))
 def add_style():
     if request.method == 'POST':
+        device_id = request.form['device_id']
         name = request.form['name']
         bg_color = request.form['bg_color']
         text_color = request.form['text_color']
@@ -52,17 +54,20 @@ def add_style():
         highlight_bg_color = request.form['highlight_bg_color']
         highlight_text_color = request.form['highlight_text_color']
 
-        execute_db_query('INSERT INTO styles (name, bg_color, text_color, font_path, font_size, highlight_bg_color, highlight_text_color) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                         (name, bg_color, text_color, font_path, font_size, highlight_bg_color, highlight_text_color))
+        execute_db_query('INSERT INTO styles (device_id, name, bg_color, text_color, font_path, font_size, highlight_bg_color, highlight_text_color) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+                         (device_id, name, bg_color, text_color, font_path, font_size, highlight_bg_color, highlight_text_color))
         send_update_signal()
         return redirect(url_for('index'))
 
-    return render_template('add_style.html')
-
-@app.route('/edit_style/<string:name>', methods=('GET', 'POST'))
-def edit_style(name):
     conn = get_db_connection()
-    style = conn.execute('SELECT * FROM styles WHERE name = ?', (name,)).fetchone()
+    devices = conn.execute('SELECT * FROM devices').fetchall()
+    conn.close()
+    return render_template('add_style.html', devices=devices)
+
+@app.route('/edit_style/<int:id>', methods=('GET', 'POST'))
+def edit_style(id):
+    conn = get_db_connection()
+    style = conn.execute('SELECT * FROM styles WHERE id = ?', (id,)).fetchone()
     conn.close()
 
     if request.method == 'POST':
@@ -73,20 +78,21 @@ def edit_style(name):
         highlight_bg_color = request.form['highlight_bg_color']
         highlight_text_color = request.form['highlight_text_color']
 
-        execute_db_query('UPDATE styles SET bg_color = ?, text_color = ?, font_path = ?, font_size = ?, highlight_bg_color = ?, highlight_text_color = ? WHERE name = ?',
-                         (bg_color, text_color, font_path, font_size, highlight_bg_color, highlight_text_color, name))
+        execute_db_query('UPDATE styles SET bg_color = ?, text_color = ?, font_path = ?, font_size = ?, highlight_bg_color = ?, highlight_text_color = ? WHERE id = ?',
+                         (bg_color, text_color, font_path, font_size, highlight_bg_color, highlight_text_color, id))
         send_update_signal()
         return redirect(url_for('index'))
 
     return render_template('edit_style.html', style=style)
 
-@app.route('/delete_style/<string:name>', methods=('POST',))
-def delete_style(name):
+@app.route('/delete_style/<int:id>', methods=('POST',))
+def delete_style(id):
     conn = get_db_connection()
-    default_style = conn.execute('SELECT name FROM styles WHERE default = 1').fetchone()['name']
-    conn.execute('UPDATE button_config SET style = ? WHERE style = ?', (default_style, name))
-    conn.execute('UPDATE button_config SET long_press_ack_style = ? WHERE long_press_ack_style = ?', (default_style, name))
-    conn.execute('DELETE FROM styles WHERE name = ?', (name,))
+    style = conn.execute('SELECT * FROM styles WHERE id = ?', (id,)).fetchone()
+    default_style = conn.execute('SELECT name FROM styles WHERE device_id = ? AND default = 1', (style['device_id'],)).fetchone()['name']
+    conn.execute('UPDATE button_config SET style = ? WHERE style = ?', (default_style, style['name']))
+    conn.execute('UPDATE button_config SET long_press_ack_style = ? WHERE long_press_ack_style = ?', (default_style, style['name']))
+    conn.execute('DELETE FROM styles WHERE id = ?', (id,))
     conn.commit()
     conn.close()
     send_update_signal()
@@ -95,6 +101,7 @@ def delete_style(name):
 @app.route('/add_button_config', methods=('GET', 'POST'))
 def add_button_config():
     if request.method == 'POST':
+        device_id = request.form['device_id']
         key = request.form['key']
         text = request.form['text']
         style = request.form['style']
@@ -104,24 +111,25 @@ def add_button_config():
         ack_action = request.form['ack_action']
 
         try:
-            execute_db_query('INSERT INTO button_config (key, text, style, long_press_ack_style, short_press, long_press, ack_action) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                             (key, text, style, long_press_ack_style, short_press, long_press, ack_action))
+            execute_db_query('INSERT INTO button_config (device_id, key, text, style, long_press_ack_style, short_press, long_press, ack_action) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+                             (device_id, key, text, style, long_press_ack_style, short_press, long_press, ack_action))
         except sqlite3.IntegrityError:
-            execute_db_query('UPDATE button_config SET text = ?, style = ?, long_press_ack_style = ?, short_press = ?, long_press = ?, ack_action = ? WHERE key = ?',
-                             (text, style, long_press_ack_style, short_press, long_press, ack_action, key))
+            execute_db_query('UPDATE button_config SET text = ?, style = ?, long_press_ack_style = ?, short_press = ?, long_press = ?, ack_action = ? WHERE device_id = ? AND key = ?',
+                             (text, style, long_press_ack_style, short_press, long_press, ack_action, device_id, key))
         send_update_signal()
         return redirect(url_for('index'))
 
     conn = get_db_connection()
+    devices = conn.execute('SELECT * FROM devices').fetchall()
     styles = conn.execute('SELECT name FROM styles').fetchall()
     conn.close()
-    return render_template('add_button_config.html', styles=styles)
+    return render_template('add_button_config.html', devices=devices, styles=styles)
 
-@app.route('/edit_button_config/<int:key>', methods=('GET', 'POST'))
-def edit_button_config(key):
+@app.route('/edit_button_config/<int:id>', methods=('GET', 'POST'))
+def edit_button_config(id):
     conn = get_db_connection()
-    button_config = conn.execute('SELECT * FROM button_config WHERE key = ?', (key,)).fetchone()
-    styles = conn.execute('SELECT name FROM styles').fetchall()
+    button_config = conn.execute('SELECT * FROM button_config WHERE id = ?', (id,)).fetchone()
+    styles = conn.execute('SELECT name FROM styles WHERE device_id = ?', (button_config['device_id'],)).fetchall()
     conn.close()
 
     if request.method == 'POST':
@@ -132,22 +140,22 @@ def edit_button_config(key):
         long_press = request.form['long_press']
         ack_action = request.form['ack_action']
 
-        execute_db_query('UPDATE button_config SET text = ?, style = ?, long_press_ack_style = ?, short_press = ?, long_press = ?, ack_action = ? WHERE key = ?',
-                         (text, style, long_press_ack_style, short_press, long_press, ack_action, key))
+        execute_db_query('UPDATE button_config SET text = ?, style = ?, long_press_ack_style = ?, short_press = ?, long_press = ?, ack_action = ? WHERE id = ?',
+                         (text, style, long_press_ack_style, short_press, long_press, ack_action, id))
         send_update_signal()
         return redirect(url_for('index'))
 
-    return render_template('edit_button_config.html', key=key, button_config=button_config, styles=styles)
+    return render_template('edit_button_config.html', button_config=button_config, styles=styles)
 
-@app.route('/edit_parameter/<string:name>', methods=('GET', 'POST'))
-def edit_parameter(name):
+@app.route('/edit_parameter/<int:id>', methods=('GET', 'POST'))
+def edit_parameter(id):
     conn = get_db_connection()
-    parameter = conn.execute('SELECT * FROM parameters WHERE name = ?', (name,)).fetchone()
+    parameter = conn.execute('SELECT * FROM parameters WHERE id = ?', (id,)).fetchone()
     conn.close()
 
     if request.method == 'POST':
         value = request.form['value']
-        execute_db_query('UPDATE parameters SET value = ? WHERE name = ?', (value, name))
+        execute_db_query('UPDATE parameters SET value = ? WHERE id = ?', (value, id))
         send_update_signal()
         return redirect(url_for('index'))
 
