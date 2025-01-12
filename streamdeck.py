@@ -47,6 +47,36 @@ def create_highlighted_image(size, text, style, font):
         'text_color': style['highlight_text_color'],
     }, font)
 
+def insert_default_configuration(device_id):
+    conn = sqlite3.connect('streamdeck.db')
+    cursor = conn.cursor()
+
+    # Insert default styles
+    styles_data = [
+        (device_id, 'default', '#000000', '#FFFFFF', '#333333', '#FFFFFF', 1),  # Default style
+        (device_id, 'highlight', '#FFFFFF', '#000000', '#FFFF00', '#000000', 0),
+        (device_id, 'long_press_ack', '#FF0000', '#FFFFFF', '#FF0000', '#FFFFFF', 0)
+    ]
+
+    cursor.executemany('''
+    INSERT INTO styles (device_id, name, bg_color, text_color, highlight_bg_color, highlight_text_color, `default`)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+    ''', styles_data)
+
+    # Insert default button configurations
+    button_config_data = [
+        (device_id, i, f'Button {i+1}', 'default' if i < 5 or i >= 10 else 'highlight', 'long_press_ack', f'short_action_{i+1}', f'long_action_{i+1}', f'ack_action_{i+1}')
+        for i in range(15)
+    ]
+
+    cursor.executemany('''
+    INSERT INTO button_config (device_id, key, text, style, long_press_ack_style, short_press, long_press, ack_action)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    ''', button_config_data)
+
+    conn.commit()
+    conn.close()
+
 def load_configuration(device_id):
     global styles, button_config, parameters, font
 
@@ -150,6 +180,9 @@ try:
     device_model = deck.deck_type()
     device_serial_number = deck.get_serial_number()
 
+    # Print detected device information
+    print(f"Detected device: {device_model} (S/N: {device_serial_number})")
+
     # Connect to the SQLite database
     conn = sqlite3.connect('streamdeck.db')
     cursor = conn.cursor()
@@ -163,8 +196,13 @@ try:
         cursor.execute('INSERT INTO devices (model, serial_number) VALUES (?, ?)', (device_model, device_serial_number))
         conn.commit()
         device_id = cursor.lastrowid
+
+        # Insert default configuration for the new device
+        insert_default_configuration(device_id)
+        print(f"Inserted default configuration for new device: {device_model} (S/N: {device_serial_number})")
     else:
         device_id = device[0]
+        print(f"Loaded existing configuration for device: {device_model} (S/N: {device_serial_number})")
 
     conn.close()
 
