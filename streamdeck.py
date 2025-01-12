@@ -96,6 +96,9 @@ def load_configuration(device_id):
 
     # Update button images
     for key in range(deck.key_count()):
+        if key not in button_config:
+            print(f"Key {key} not found in button_config")
+            continue
         style_name = button_config[key]['style']
         style = styles[style_name]
         original_image = create_image(deck.key_image_format()['size'], button_config[key]['text'], style, font)
@@ -173,6 +176,9 @@ try:
     startup_sequence.run_startup_sequence(deck, styles)
 
     for key in range(deck.key_count()):
+        if key not in button_config:
+            print(f"Key {key} not found in button_config")
+            continue
         style_name = button_config[key]['style']
         style = styles[style_name]
         original_image = create_image(deck.key_image_format()['size'], button_config[key]['text'], style, font)
