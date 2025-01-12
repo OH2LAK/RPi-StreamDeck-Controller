@@ -26,8 +26,11 @@ def get_connected_device():
         response = requests.get('http://localhost:5001/api/device_info')
         if response.status_code == 200:
             return response.json()
-    except requests.exceptions.RequestException:
-        return None
+        else:
+            print(f"Error fetching device info: {response.status_code} {response.text}")
+    except requests.exceptions.RequestException as e:
+        print(f"RequestException: {e}")
+    return None
 
 @app.route('/')
 def index():
