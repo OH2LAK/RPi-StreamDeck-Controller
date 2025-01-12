@@ -4,12 +4,8 @@
     <title>StreamDeck Configurations</title>
 </head>
 <body>
-    <h1>Devices</h1>
-    <ul>
-        {% for device in devices %}
-            <li>{{ device.model }} (S/N: {{ device.serial_number }})</li>
-        {% endfor %}
-    </ul>
+    <h1>Device</h1>
+    <p>{{ device.model }} (S/N: {{ device.serial_number }})</p>
 
     <h1>Styles</h1>
     <ul>

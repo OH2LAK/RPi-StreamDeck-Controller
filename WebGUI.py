@@ -35,12 +35,12 @@ def send_update_signal():
 @app.route('/')
 def index():
     conn = get_db_connection()
-    devices = conn.execute('SELECT * FROM devices').fetchall()
-    styles = conn.execute('SELECT * FROM styles').fetchall()
-    button_configs = conn.execute('SELECT * FROM button_config').fetchall()
+    device = conn.execute('SELECT * FROM devices LIMIT 1').fetchone()
+    styles = conn.execute('SELECT * FROM styles WHERE device_id = ?', (device['id'],)).fetchall()
+    button_configs = conn.execute('SELECT * FROM button_config WHERE device_id = ?', (device['id'],)).fetchall()
     parameters = conn.execute('SELECT * FROM parameters').fetchall()
     conn.close()
-    return render_template('index.html', devices=devices, styles=styles, button_configs=button_configs, parameters=parameters)
+    return render_template('index.html', device=device, styles=styles, button_configs=button_configs, parameters=parameters)
 
 @app.route('/add_style', methods=('GET', 'POST'))
 def add_style():
@@ -58,9 +58,9 @@ def add_style():
         return redirect(url_for('index'))
 
     conn = get_db_connection()
-    devices = conn.execute('SELECT * FROM devices').fetchall()
+    device = conn.execute('SELECT * FROM devices LIMIT 1').fetchone()
     conn.close()
-    return render_template('add_style.html', devices=devices)
+    return render_template('add_style.html', device=device)
 
 @app.route('/edit_style/<int:id>', methods=('GET', 'POST'))
 def edit_style(id):
@@ -116,10 +116,10 @@ def add_button_config():
         return redirect(url_for('index'))
 
     conn = get_db_connection()
-    devices = conn.execute('SELECT * FROM devices').fetchall()
-    styles = conn.execute('SELECT name FROM styles').fetchall()
+    device = conn.execute('SELECT * FROM devices LIMIT 1').fetchone()
+    styles = conn.execute('SELECT name FROM styles WHERE device_id = ?', (device['id'],)).fetchall()
     conn.close()
-    return render_template('add_button_config.html', devices=devices, styles=styles)
+    return render_template('add_button_config.html', device=device, styles=styles)
 
 @app.route('/edit_button_config/<int:id>', methods=('GET', 'POST'))
 def edit_button_config(id):
