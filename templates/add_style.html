@@ -1,33 +1,28 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
 <head>
     <title>Add Style</title>
 </head>
 <body>
-    <h1>Add Style</h1>
+    {% if device %}
+    <h1>Add Style for Device: {{ device['model'] }} (S/N: {{ device['serial_number'] }})</h1>
     <form method="post">
-        <label for="device_id">Device:</label>
-        <select id="device_id" name="device_id">
-            {% for device in devices %}
-                <option value="{{ device.id }}">{{ device.model }} (S/N: {{ device.serial_number }})</option>
-            {% endfor %}
-        </select><br>
+        <input type="hidden" name="device_id" value="{{ device['id'] }}">
         <label for="name">Name:</label>
         <input type="text" id="name" name="name"><br>
         <label for="bg_color">Background Color:</label>
         <input type="text" id="bg_color" name="bg_color"><br>
         <label for="text_color">Text Color:</label>
         <input type="text" id="text_color" name="text_color"><br>
-        <label for="font_path">Font Path:</label>
-        <input type="text" id="font_path" name="font_path"><br>
-        <label for="font_size">Font Size:</label>
-        <input type="number" id="font_size" name="font_size"><br>
         <label for="highlight_bg_color">Highlight Background Color:</label>
         <input type="text" id="highlight_bg_color" name="highlight_bg_color"><br>
         <label for="highlight_text_color">Highlight Text Color:</label>
         <input type="text" id="highlight_text_color" name="highlight_text_color"><br>
         <input type="submit" value="Add Style">
     </form>
+    {% else %}
+    <p>No device connected.</p>
+    {% endif %}
     <a href="{{ url_for('index') }}">Back</a>
 </body>
 </html>

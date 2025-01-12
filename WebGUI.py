@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for
 import sqlite3
 import socket
 import time
+from StreamDeck import DeviceManager
 
 app = Flask(__name__)
 
@@ -21,13 +22,37 @@ def send_update_signal():
         s.connect(('localhost', 65432))
         s.sendall(b'update')
 
+def get_connected_device():
+    decks = DeviceManager.DeviceManager().enumerate()
+    if not decks:
+        return None
+    deck = decks[0]
+    deck.open()
+    device_info = {
+        'model': deck.deck_type(),
+        'serial_number': deck.get_serial_number()
+    }
+    deck.close()
+    return device_info
+
 @app.route('/')
 def index():
     conn = get_db_connection()
-    device = conn.execute('SELECT * FROM devices LIMIT 1').fetchone()
-    styles = conn.execute('SELECT * FROM styles WHERE device_id = ?', (device['id'],)).fetchall()
-    button_configs = conn.execute('SELECT * FROM button_config WHERE device_id = ?', (device['id'],)).fetchall()
-    parameters = conn.execute('SELECT * FROM parameters').fetchall()
+    device_info = get_connected_device()
+    if device_info:
+        device = conn.execute('SELECT * FROM devices WHERE serial_number = ?', (device_info['serial_number'],)).fetchone()
+        if not device:
+            conn.execute('INSERT INTO devices (model, serial_number) VALUES (?, ?)', (device_info['model'], device_info['serial_number']))
+            conn.commit()
+            device = conn.execute('SELECT * FROM devices WHERE serial_number = ?', (device_info['serial_number'],)).fetchone()
+        styles = conn.execute('SELECT * FROM styles WHERE device_id = ?', (device['id'],)).fetchall()
+        button_configs = conn.execute('SELECT * FROM button_config WHERE device_id = ?', (device['id'],)).fetchall()
+        parameters = conn.execute('SELECT * FROM parameters').fetchall()
+    else:
+        device = None
+        styles = []
+        button_configs = []
+        parameters = []
     conn.close()
     return render_template('index.html', device=device, styles=styles, button_configs=button_configs, parameters=parameters)
 
@@ -47,7 +72,11 @@ def add_style():
         return redirect(url_for('index'))
 
     conn = get_db_connection()
-    device = conn.execute('SELECT * FROM devices LIMIT 1').fetchone()
+    device_info = get_connected_device()
+    if device_info:
+        device = conn.execute('SELECT * FROM devices WHERE serial_number = ?', (device_info['serial_number'],)).fetchone()
+    else:
+        device = None
     conn.close()
     return render_template('add_style.html', device=device)
 
@@ -55,7 +84,11 @@ def add_style():
 def edit_style(id):
     conn = get_db_connection()
     style = conn.execute('SELECT * FROM styles WHERE id = ?', (id,)).fetchone()
-    device = conn.execute('SELECT * FROM devices LIMIT 1').fetchone()
+    device_info = get_connected_device()
+    if device_info:
+        device = conn.execute('SELECT * FROM devices WHERE serial_number = ?', (device_info['serial_number'],)).fetchone()
+    else:
+        device = None
     conn.close()
 
     if request.method == 'POST':

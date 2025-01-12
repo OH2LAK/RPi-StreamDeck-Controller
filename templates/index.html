@@ -5,9 +5,13 @@
 </head>
 <body>
     <h1>StreamDeck Configuration</h1>
+    {% if device %}
     <h2>Device Information</h2>
     <p>Model: {{ device['model'] }}</p>
     <p>Serial Number: {{ device['serial_number'] }}</p>
+    {% else %}
+    <p>No device connected.</p>
+    {% endif %}
 
     <h2>Styles</h2>
     <table>
