@@ -138,7 +138,7 @@ def load_configuration(device_id):
     parameters = {row[0]: row[1] for row in cursor.fetchall()}
 
     # Load font
-    font_path = parameters['font_path']
+    font_path = "Roboto-Medium.ttf"
     font_size = int(parameters['font_size'])
     font = ImageFont.truetype(font_path, font_size)
 
@@ -227,7 +227,7 @@ try:
         device_id = cursor.lastrowid
 
         # Display configuration message
-        font = ImageFont.truetype("arial.ttf", 14)  # Adjust font path and size as needed
+        font = ImageFont.truetype("/usr/share/fonts/truetype/roboto/Roboto-Medium.ttf", 14)  # Adjust font path and size as needed
         display_configuration_message(deck, font)
         print(f"Inserted new device: {device_model} (S/N: {device_serial_number}). Displaying configuration message.")
     else:
