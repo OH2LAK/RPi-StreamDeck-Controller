@@ -119,10 +119,10 @@ try:
     deck.open()
     deck.reset()
 
+    load_configuration()  # Load configuration before running the startup sequence
+
     # Run the startup sequence
     startup_sequence.run_startup_sequence(deck, styles)
-
-    load_configuration()
 
     for key in range(deck.key_count()):
         style_name = button_config[key]['style']
