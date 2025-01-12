@@ -46,7 +46,7 @@ The following packages are required and should be installed via APT:
 - `libusb-1.0-0-dev` (USB library for StreamDeck)
 - `python3-streamdeck` (StreamDeck driver package)
 - `fonts-roboto` (Roboto font package)
-
+- `python3-netifaces` (Portable library for network interface information)
 
 ## Requirements
 
@@ -67,7 +67,7 @@ The following packages are required and should be installed via APT:
 2. **Install the required packages using APT:**
    ```sh
 sudo apt update
-sudo apt install python3 python3-pip python3-pil python3-flask python3-setuptools libhidapi-libusb0 libhidapi-hidraw0 libusb-1.0-0-dev python3-streamdeck fonts-roboto
+sudo apt install python3 python3-pip python3-pil python3-flask python3-setuptools libhidapi-libusb0 libhidapi-hidraw0 libusb-1.0-0-dev python3-streamdeck fonts-roboto 
 ```
 
 ## Setting up the database
