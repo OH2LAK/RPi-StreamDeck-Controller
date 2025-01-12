@@ -4,7 +4,7 @@ import sqlite3
 conn = sqlite3.connect('streamdeck.db')
 cursor = conn.cursor()
 
-# Create styles table
+# Create styles table with a default column
 cursor.execute('''
 CREATE TABLE IF NOT EXISTS styles (
     id INTEGER PRIMARY KEY,
@@ -14,7 +14,8 @@ CREATE TABLE IF NOT EXISTS styles (
     font_path TEXT,
     font_size INTEGER,
     highlight_bg_color TEXT,
-    highlight_text_color TEXT
+    highlight_text_color TEXT,
+    default INTEGER DEFAULT 0
 )
 ''')
 

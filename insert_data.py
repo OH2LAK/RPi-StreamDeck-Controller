@@ -4,17 +4,17 @@ import sqlite3
 conn = sqlite3.connect('streamdeck.db')
 cursor = conn.cursor()
 
-# Insert styles data
+# Insert styles data with a default style
 styles_data = [
-    ('default', '#000000', '#FFFFFF', 'Roboto-Medium.ttf', 14, '#333333', '#FFFFFF'),
-    ('highlight', '#FFFFFF', '#000000', 'Roboto-Medium.ttf', 14, '#FFFF00', '#000000'),
-    ('long_press_ack', '#FF0000', '#FFFFFF', 'Roboto-Medium.ttf', 14, '#FF0000', '#FFFFFF'),  # Add long_press_ack style
+    ('default', '#000000', '#FFFFFF', 'Roboto-Medium.ttf', 14, '#333333', '#FFFFFF', 1),  # Default style
+    ('highlight', '#FFFFFF', '#000000', 'Roboto-Medium.ttf', 14, '#FFFF00', '#000000', 0),
+    ('long_press_ack', '#FF0000', '#FFFFFF', 'Roboto-Medium.ttf', 14, '#FF0000', '#FFFFFF', 0),
     # Add more styles as needed
 ]
 
 cursor.executemany('''
-INSERT OR IGNORE INTO styles (name, bg_color, text_color, font_path, font_size, highlight_bg_color, highlight_text_color)
-VALUES (?, ?, ?, ?, ?, ?, ?)
+INSERT OR IGNORE INTO styles (name, bg_color, text_color, font_path, font_size, highlight_bg_color, highlight_text_color, default)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 ''', styles_data)
 
 # Insert button configurations

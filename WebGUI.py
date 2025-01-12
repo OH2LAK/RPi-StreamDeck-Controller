@@ -80,6 +80,18 @@ def edit_style(name):
 
     return render_template('edit_style.html', style=style)
 
+@app.route('/delete_style/<string:name>', methods=('POST',))
+def delete_style(name):
+    conn = get_db_connection()
+    default_style = conn.execute('SELECT name FROM styles WHERE default = 1').fetchone()['name']
+    conn.execute('UPDATE button_config SET style = ? WHERE style = ?', (default_style, name))
+    conn.execute('UPDATE button_config SET long_press_ack_style = ? WHERE long_press_ack_style = ?', (default_style, name))
+    conn.execute('DELETE FROM styles WHERE name = ?', (name,))
+    conn.commit()
+    conn.close()
+    send_update_signal()
+    return redirect(url_for('index'))
+
 @app.route('/add_button_config', methods=('GET', 'POST'))
 def add_button_config():
     if request.method == 'POST':
@@ -140,23 +152,6 @@ def edit_parameter(name):
         return redirect(url_for('index'))
 
     return render_template('edit_parameter.html', parameter=parameter)
-
-@app.route('/update_streamdeck', methods=('POST',))
-def update_streamdeck():
-    # Send a signal to the streamdeck.py script to reload the configuration
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.connect(('localhost', 65432))
-        s.sendall(b'update')
-    return redirect(url_for('index'))
-
-@app.route('/send_command', methods=('POST',))
-def send_command():
-    command = request.form['command']
-    # Send the command to the streamdeck.py script
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.connect(('localhost', 65432))
-        s.sendall(command.encode())
-    return redirect(url_for('index'))
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)
