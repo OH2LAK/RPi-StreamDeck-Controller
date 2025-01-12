@@ -56,16 +56,20 @@ def get_ip_address():
 
 def display_configuration_message(deck, font):
     message = "USE WEB GUI TO CONFIGURE"
+    words = message.split()
     ip_address = get_ip_address()
+    print(f"IP Address: {ip_address}")  # Debugging: Print the IP address
     ip_parts = ip_address.split('.')
 
     for i in range(6):
-        image = create_image(deck.key_image_format()['size'], message.split()[i], {'bg_color': '#000000', 'text_color': '#FFFFFF'}, font)
+        text = words[i] if i < len(words) else ""
+        image = create_image(deck.key_image_format()['size'], text, {'bg_color': '#000000', 'text_color': '#FFFFFF'}, font)
         deck.set_key_image(i, image)
 
     deck.set_key_image(6, create_image(deck.key_image_format()['size'], "IP", {'bg_color': '#000000', 'text_color': '#FFFFFF'}, font))
     deck.set_key_image(7, create_image(deck.key_image_format()['size'], "address", {'bg_color': '#000000', 'text_color': '#FFFFFF'}, font))
     for i in range(4):
+        print(f"IP Part {i}: {ip_parts[i]}")  # Debugging: Print each IP part
         deck.set_key_image(8 + i, create_image(deck.key_image_format()['size'], ip_parts[i], {'bg_color': '#000000', 'text_color': '#FFFFFF'}, font))
 
 def insert_default_configuration(device_id):
