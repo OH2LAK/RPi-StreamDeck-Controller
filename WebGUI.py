@@ -31,8 +31,9 @@ def index():
     conn = get_db_connection()
     styles = conn.execute('SELECT * FROM styles').fetchall()
     button_configs = conn.execute('SELECT * FROM button_config').fetchall()
+    parameters = conn.execute('SELECT * FROM parameters').fetchall()
     conn.close()
-    return render_template('index.html', styles=styles, button_configs=button_configs)
+    return render_template('index.html', styles=styles, button_configs=button_configs, parameters=parameters)
 
 @app.route('/add_style', methods=('GET', 'POST'))
 def add_style():
@@ -115,6 +116,19 @@ def edit_button_config(key):
         return redirect(url_for('index'))
 
     return render_template('edit_button_config.html', key=key, button_config=button_config, styles=styles)
+
+@app.route('/edit_parameter/<string:name>', methods=('GET', 'POST'))
+def edit_parameter(name):
+    conn = get_db_connection()
+    parameter = conn.execute('SELECT * FROM parameters WHERE name = ?', (name,)).fetchone()
+    conn.close()
+
+    if request.method == 'POST':
+        value = request.form['value']
+        execute_db_query('UPDATE parameters SET value = ? WHERE name = ?', (value, name))
+        return redirect(url_for('index'))
+
+    return render_template('edit_parameter.html', parameter=parameter)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)

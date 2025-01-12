@@ -1,0 +1,15 @@
+<!doctype html>
+<html>
+<head>
+    <title>Edit Parameter</title>
+</head>
+<body>
+    <h1>Edit Parameter: {{ parameter.name }}</h1>
+    <form method="post">
+        <label for="value">Value:</label>
+        <input type="number" step="0.01" id="value" name="value" value="{{ parameter.value }}"><br>
+        <input type="submit" value="Update Parameter">
+    </form>
+    <a href="{{ url_for('index') }}">Back</a>
+</body>
+</html>
