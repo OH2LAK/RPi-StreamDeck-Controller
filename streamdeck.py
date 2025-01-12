@@ -6,6 +6,7 @@ from PIL import Image, ImageDraw, ImageFont, ImageOps
 import io
 import sqlite3
 import threading
+import socket
 
 # Ensure the script's directory is in the Python path
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -47,52 +48,81 @@ def create_highlighted_image(size, text, style):
         'font': style['font'],
     })
 
-# Connect to the SQLite database
-conn = sqlite3.connect('streamdeck.db')
-cursor = conn.cursor()
+def load_configuration():
+    global styles, button_config, parameters
 
-# Fetch styles
-cursor.execute('SELECT name, bg_color, text_color, font_path, font_size, highlight_bg_color, highlight_text_color FROM styles')
-styles = {row[0]: {
-    'bg_color': row[1],
-    'text_color': row[2],
-    'font': ImageFont.truetype(row[3], row[4]),
-    'highlight_bg_color': row[5],
-    'highlight_text_color': row[6]
-} for row in cursor.fetchall()}
+    # Connect to the SQLite database
+    conn = sqlite3.connect('streamdeck.db')
+    cursor = conn.cursor()
 
-# Fetch button configurations
-cursor.execute('SELECT key, text, style, long_press_ack_style, short_press, long_press, ack_action FROM button_config')
-button_config = {row[0]: {
-    'text': row[1],
-    'style': row[2],
-    'long_press_ack_style': row[3],
-    'short_press': row[4],
-    'long_press': row[5],
-    'ack_action': row[6]
-} for row in cursor.fetchall()}
+    # Fetch styles
+    cursor.execute('SELECT name, bg_color, text_color, font_path, font_size, highlight_bg_color, highlight_text_color FROM styles')
+    styles = {row[0]: {
+        'bg_color': row[1],
+        'text_color': row[2],
+        'font': ImageFont.truetype(row[3], row[4]),
+        'highlight_bg_color': row[5],
+        'highlight_text_color': row[6]
+    } for row in cursor.fetchall()}
 
-# Fetch parameters
-cursor.execute('SELECT name, value FROM parameters')
-parameters = {row[0]: row[1] for row in cursor.fetchall()}
+    # Fetch button configurations
+    cursor.execute('SELECT key, text, style, long_press_ack_style, short_press, long_press, ack_action FROM button_config')
+    button_config = {row[0]: {
+        'text': row[1],
+        'style': row[2],
+        'long_press_ack_style': row[3],
+        'short_press': row[4],
+        'long_press': row[5],
+        'ack_action': row[6]
+    } for row in cursor.fetchall()}
 
-# Close the database connection
-conn.close()
+    # Fetch parameters
+    cursor.execute('SELECT name, value FROM parameters')
+    parameters = {row[0]: row[1] for row in cursor.fetchall()}
 
-deck = DeviceManager.DeviceManager().enumerate()[0]
-deck.open()
+    # Close the database connection
+    conn.close()
 
 def stop_program():
     input("Press X to stop the program...\n")
     stop_flag.set()
 
+def listen_for_updates():
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(('localhost', 65432))
+        s.listen()
+        while not stop_flag.is_set():
+            conn, addr = s.accept()
+            with conn:
+                data = conn.recv(1024)
+                if data == b'update':
+                    load_configuration()
+                    print("Configuration reloaded")
+                else:
+                    handle_command(data.decode())
+
+def handle_command(command):
+    # Example command: "set_key_image 0 highlighted"
+    parts = command.split()
+    if parts[0] == "set_key_image":
+        key = int(parts[1])
+        image_type = parts[2]
+        if image_type in images[key]:
+            deck.set_key_image(key, images[key][image_type])
+            print(f"Set key {key} image to {image_type}")
+
 try:
     threading.Thread(target=stop_program).start()  # Start the stop program thread
+    threading.Thread(target=listen_for_updates).start()  # Start the update listener thread
 
+    deck = DeviceManager.DeviceManager().enumerate()[0]
+    deck.open()
     deck.reset()
 
     # Run the startup sequence
     startup_sequence.run_startup_sequence(deck, styles)
+
+    load_configuration()
 
     for key in range(deck.key_count()):
         style_name = button_config[key]['style']

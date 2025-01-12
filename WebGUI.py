@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for
 import sqlite3
 from PIL import ImageFont
 import time
+import socket
 
 app = Flask(__name__)
 
@@ -129,6 +130,23 @@ def edit_parameter(name):
         return redirect(url_for('index'))
 
     return render_template('edit_parameter.html', parameter=parameter)
+
+@app.route('/update_streamdeck', methods=('POST',))
+def update_streamdeck():
+    # Send a signal to the streamdeck.py script to reload the configuration
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.connect(('localhost', 65432))
+        s.sendall(b'update')
+    return redirect(url_for('index'))
+
+@app.route('/send_command', methods=('POST',))
+def send_command():
+    command = request.form['command']
+    # Send the command to the streamdeck.py script
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.connect(('localhost', 65432))
+        s.sendall(command.encode())
+    return redirect(url_for('index'))
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)
