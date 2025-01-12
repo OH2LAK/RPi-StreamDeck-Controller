@@ -51,16 +51,7 @@ cursor.execute('''
 CREATE TABLE IF NOT EXISTS parameters (
     id INTEGER PRIMARY KEY,
     name TEXT UNIQUE,
-    value REAL
-)
-''')
-
-# Create generic_config table
-cursor.execute('''
-CREATE TABLE IF NOT EXISTS generic_config (
-    id INTEGER PRIMARY KEY,
-    font_path TEXT,
-    font_size INTEGER
+    value TEXT
 )
 ''')
 
