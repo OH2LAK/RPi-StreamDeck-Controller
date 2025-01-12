@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for
 import sqlite3
 import socket
 import time
-from StreamDeck import DeviceManager
+import requests
 
 app = Flask(__name__)
 
@@ -23,17 +23,12 @@ def send_update_signal():
         s.sendall(b'update')
 
 def get_connected_device():
-    decks = DeviceManager.DeviceManager().enumerate()
-    if not decks:
+    try:
+        response = requests.get('http://localhost:5001/api/device_info')
+        if response.status_code == 200:
+            return response.json()
+    except requests.exceptions.RequestException:
         return None
-    deck = decks[0]
-    deck.open()
-    device_info = {
-        'model': deck.deck_type(),
-        'serial_number': deck.get_serial_number()
-    }
-    deck.close()
-    return device_info
 
 @app.route('/')
 def index():

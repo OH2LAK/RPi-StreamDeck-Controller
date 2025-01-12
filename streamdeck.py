@@ -8,6 +8,7 @@ import sqlite3
 import threading
 import socket
 import netifaces
+from flask import Flask, jsonify
 
 # Ensure the script's directory is in the Python path
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -22,6 +23,8 @@ long_press_ack_keys = set()  # Track keys that are in long press acknowledgment 
 
 # Flag for stopping the main loop
 stop_flag = threading.Event()
+
+app = Flask(__name__)
 
 def create_image(size, text, style, font):
     image = Image.new('RGB', size, style['bg_color'])
@@ -142,7 +145,7 @@ def load_configuration(device_id):
     parameters = {row[0]: row[1] for row in cursor.fetchall()}
 
     # Load font
-    font_path = "Roboto-Medium.ttf"
+    font_path = "/usr/share/fonts/truetype/roboto/Roboto-Medium.ttf"
     font_size = int(parameters['font_size'])
     font = ImageFont.truetype(font_path, font_size)
 
@@ -201,6 +204,14 @@ def check_for_configuration_update(device_id):
     count = cursor.fetchone()[0]
     conn.close()
     return count > 0
+
+@app.route('/api/device_info', methods=['GET'])
+def device_info():
+    device_info = {
+        'model': deck.deck_type(),
+        'serial_number': deck.get_serial_number()
+    }
+    return jsonify(device_info)
 
 try:
     threading.Thread(target=stop_program).start()  # Start the stop program thread
@@ -307,3 +318,4 @@ try:
 
 finally:
     deck.close()
+    app.run(host='0.0.0.0', port=5001)
