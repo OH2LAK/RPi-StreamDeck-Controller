@@ -43,9 +43,6 @@ FROM styles
 cursor.execute('DROP TABLE styles')
 cursor.execute('ALTER TABLE styles_new RENAME TO styles')
 
-# Set the default style
-cursor.execute('UPDATE styles SET `default` = 1 WHERE name = "default"')
-
 # Commit changes and close the connection
 conn.commit()
 conn.close()

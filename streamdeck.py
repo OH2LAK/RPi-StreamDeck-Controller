@@ -138,7 +138,7 @@ try:
     deck.open()
     deck.reset()
 
-    # Get device details
+    # Get device information
     device_model = deck.deck_type()
     device_serial_number = deck.get_serial_number()
 
