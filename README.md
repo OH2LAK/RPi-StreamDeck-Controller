@@ -1,3 +1,7 @@
+> [!NOTE]
+> This program is just in its baby steps. Only basic communication between the controller and StreamDeck and behavior control of the buttons have been implemented.
+> Next task is to implement the support for all kind of actions based on button press.
+
 # Python StreamDeck Controller for Raspberry Pi Zero W
 
 A Python script to control a StreamDeck device with customizable button styles and actions. The controller is to sit in a Raspberry Pi Zero W miniature computer which can be attached to the back of the StreamDeck device.
