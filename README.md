@@ -44,13 +44,9 @@ The following packages are required and should be installed via APT:
 - `libhidapi-libusb0` (HIDAPI library for StreamDeck)
 - `libhidapi-hidraw0` (HIDAPI library for StreamDeck)
 - `libusb-1.0-0-dev` (USB library for StreamDeck)
-- `python3-elgato-streamdeck` (Python 3 library to control an Elgato Stream Deck)
+- `python3-streamdeck` (StreamDeck driver package)
+- `fonts-roboto` (Roboto font package)
 
-For installing these packages, you can use the following command:
-```sh
-sudo apt update
-sudo apt install python3 python3-pip python3-pil python3-flask python3-setuptools libhidapi-libusb0 libhidapi-hidraw0 libusb-1.0-0-dev python3-elgato-streamdeck
-```
 
 ## Requirements
 
@@ -67,11 +63,13 @@ sudo apt install python3 python3-pip python3-pil python3-flask python3-setuptool
    git clone https://github.com/OH2LAK/RPi-StreamDeck-Controller.git
    cd RPi-StreamDeck-Controller
 ```
+
 2. **Install the required packages using APT:**
    ```sh
 sudo apt update
-sudo apt install python3 python3-pip python3-pil python3-flask python3-setuptools libhidapi-libusb0 libhidapi-hidraw0 libusb-1.0-0-dev python3-elgato-streamdeck
+sudo apt install python3 python3-pip python3-pil python3-flask python3-setuptools libhidapi-libusb0 libhidapi-hidraw0 libusb-1.0-0-dev python3-streamdeck fonts-roboto
 ```
+
 ## Setting up the database
 1. **Create the SQLite database and tables:**
 ```sh

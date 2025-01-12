@@ -6,8 +6,8 @@ cursor = conn.cursor()
 
 # Insert styles data
 styles_data = [
-    ('default', '#000000', '#FFFFFF', 'arial.ttf', 14, '#333333', '#FFFFFF'),
-    ('highlight', '#FFFFFF', '#000000', 'arial.ttf', 14, '#FFFF00', '#000000'),
+    ('default', '#000000', '#FFFFFF', 'Roboto-Medium', 14, '#333333', '#FFFFFF'),
+    ('highlight', '#FFFFFF', '#000000', 'Roboto-Medium', 14, '#FFFF00', '#000000'),
     # Add more styles as needed
 ]
 
