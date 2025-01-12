@@ -1,0 +1,25 @@
+<!doctype html>
+<html>
+<head>
+    <title>Edit Style</title>
+</head>
+<body>
+    <h1>Edit Style: {{ style.name }}</h1>
+    <form method="post">
+        <label for="bg_color">Background Color:</label>
+        <input type="text" id="bg_color" name="bg_color" value="{{ style.bg_color }}"><br>
+        <label for="text_color">Text Color:</label>
+        <input type="text" id="text_color" name="text_color" value="{{ style.text_color }}"><br>
+        <label for="font_path">Font Path:</label>
+        <input type="text" id="font_path" name="font_path" value="{{ style.font_path }}"><br>
+        <label for="font_size">Font Size:</label>
+        <input type="number" id="font_size" name="font_size" value="{{ style.font_size }}"><br>
+        <label for="highlight_bg_color">Highlight Background Color:</label>
+        <input type="text" id="highlight_bg_color" name="highlight_bg_color" value="{{ style.highlight_bg_color }}"><br>
+        <label for="highlight_text_color">Highlight Text Color:</label>
+        <input type="text" id="highlight_text_color" name="highlight_text_color" value="{{ style.highlight_text_color }}"><br>
+        <input type="submit" value="Update Style">
+    </form>
+    <a href="{{ url_for('index') }}">Back</a>
+</body>
+</html>

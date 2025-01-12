@@ -7,7 +7,7 @@
     <h1>Styles</h1>
     <ul>
         {% for style in styles %}
-            <li>{{ style.name }}: {{ style.bg_color }}, {{ style.text_color }}, {{ style.font_path }}, {{ style.font_size }}, {{ style.highlight_bg_color }}, {{ style.highlight_text_color }}</li>
+            <li><a href="{{ url_for('edit_style', name=style.name) }}">{{ style.name }}</a>: {{ style.bg_color }}, {{ style.text_color }}, {{ style.font_path }}, {{ style.font_size }}, {{ style.highlight_bg_color }}, {{ style.highlight_text_color }}</li>
         {% endfor %}
     </ul>
     <a href="{{ url_for('add_style') }}">Add Style</a>

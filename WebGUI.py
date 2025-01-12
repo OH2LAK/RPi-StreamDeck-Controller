@@ -51,6 +51,26 @@ def add_style():
 
     return render_template('add_style.html')
 
+@app.route('/edit_style/<string:name>', methods=('GET', 'POST'))
+def edit_style(name):
+    conn = get_db_connection()
+    style = conn.execute('SELECT * FROM styles WHERE name = ?', (name,)).fetchone()
+    conn.close()
+
+    if request.method == 'POST':
+        bg_color = request.form['bg_color']
+        text_color = request.form['text_color']
+        font_path = request.form['font_path']
+        font_size = request.form['font_size']
+        highlight_bg_color = request.form['highlight_bg_color']
+        highlight_text_color = request.form['highlight_text_color']
+
+        execute_db_query('UPDATE styles SET bg_color = ?, text_color = ?, font_path = ?, font_size = ?, highlight_bg_color = ?, highlight_text_color = ? WHERE name = ?',
+                         (bg_color, text_color, font_path, font_size, highlight_bg_color, highlight_text_color, name))
+        return redirect(url_for('index'))
+
+    return render_template('edit_style.html', style=style)
+
 @app.route('/add_button_config', methods=('GET', 'POST'))
 def add_button_config():
     if request.method == 'POST':
