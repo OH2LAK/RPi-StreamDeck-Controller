@@ -19,7 +19,7 @@ def index():
 
 @app.route('/add_style', methods=('GET', 'POST'))
 def add_style():
-    if request.method == 'POST'):
+    if request.method == 'POST':
         name = request.form['name']
         bg_color = request.form['bg_color']
         text_color = request.form['text_color']
