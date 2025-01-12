@@ -68,11 +68,14 @@ styles = {row[0]: {
     'highlight_text_color': row[6]
 } for row in cursor.fetchall()}
 
+# Close the database connection
+conn.close()
+
 # Fetch button configurations
+conn = sqlite3.connect('streamdeck.db')
+cursor = conn.cursor()
 cursor.execute('SELECT key, text, style FROM button_config')
 button_config = {row[0]: {'text': row[1], 'style': row[2]} for row in cursor.fetchall()}
-
-# Close the database connection
 conn.close()
 
 deck = DeviceManager.DeviceManager().enumerate()[0]
