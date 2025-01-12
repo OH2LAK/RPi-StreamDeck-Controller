@@ -4,7 +4,7 @@ import sqlite3
 conn = sqlite3.connect('streamdeck.db')
 cursor = conn.cursor()
 
-# Insert device data
+# Insert devices data
 devices_data = [
     ('StreamDeck Mini', 'ABC123'),
     ('StreamDeck XL', 'XYZ789')
@@ -18,21 +18,21 @@ VALUES (?, ?)
 # Get device IDs
 cursor.execute('SELECT id FROM devices WHERE serial_number = "ABC123"')
 device_id_mini = cursor.fetchone()[0]
-
 cursor.execute('SELECT id FROM devices WHERE serial_number = "XYZ789"')
 device_id_xl = cursor.fetchone()[0]
 
 # Insert styles data with device_id
 styles_data = [
-    (device_id_mini, 'default', '#000000', '#FFFFFF', 'Roboto-Medium.ttf', 14, '#333333', '#FFFFFF', 1),  # Default style for Mini
+    (device_id_mini, 'default', '#000000', '#FFFFFF', 'Roboto-Medium.ttf', 14, '#333333', '#FFFFFF', 1),  # Default style
     (device_id_mini, 'highlight', '#FFFFFF', '#000000', 'Roboto-Medium.ttf', 14, '#FFFF00', '#000000', 0),
-    (device_id_xl, 'default', '#000000', '#FFFFFF', 'Roboto-Medium.ttf', 14, '#333333', '#FFFFFF', 1),  # Default style for XL
+    (device_id_mini, 'long_press_ack', '#FF0000', '#FFFFFF', 'Roboto-Medium.ttf', 14, '#FF0000', '#FFFFFF', 0),
+    (device_id_xl, 'default', '#000000', '#FFFFFF', 'Roboto-Medium.ttf', 14, '#333333', '#FFFFFF', 1),  # Default style
     (device_id_xl, 'highlight', '#FFFFFF', '#000000', 'Roboto-Medium.ttf', 14, '#FFFF00', '#000000', 0),
-    # Add more styles as needed
+    (device_id_xl, 'long_press_ack', '#FF0000', '#FFFFFF', 'Roboto-Medium.ttf', 14, '#FF0000', '#FFFFFF', 0)
 ]
 
 cursor.executemany('''
-INSERT OR IGNORE INTO styles (device_id, name, bg_color, text_color, font_path, font_size, highlight_bg_color, highlight_text_color, default)
+INSERT OR IGNORE INTO styles (device_id, name, bg_color, text_color, font_path, font_size, highlight_bg_color, highlight_text_color, `default`)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 ''', styles_data)
 

@@ -38,12 +38,5 @@
             <li><a href="{{ url_for('edit_parameter', id=parameter.id) }}">{{ parameter.name }}</a>: {{ parameter.value }}</li>
         {% endfor %}
     </ul>
-
-    <h1>Send Command</h1>
-    <form action="{{ url_for('send_command') }}" method="post">
-        <label for="command">Command:</label>
-        <input type="text" id="command" name="command"><br>
-        <input type="submit" value="Send Command">
-    </form>
 </body>
 </html>

@@ -89,7 +89,7 @@ def edit_style(id):
 def delete_style(id):
     conn = get_db_connection()
     style = conn.execute('SELECT * FROM styles WHERE id = ?', (id,)).fetchone()
-    default_style = conn.execute('SELECT name FROM styles WHERE device_id = ? AND default = 1', (style['device_id'],)).fetchone()['name']
+    default_style = conn.execute('SELECT name FROM styles WHERE device_id = ? AND `default` = 1', (style['device_id'],)).fetchone()['name']
     conn.execute('UPDATE button_config SET style = ? WHERE style = ?', (default_style, style['name']))
     conn.execute('UPDATE button_config SET long_press_ack_style = ? WHERE long_press_ack_style = ?', (default_style, style['name']))
     conn.execute('DELETE FROM styles WHERE id = ?', (id,))

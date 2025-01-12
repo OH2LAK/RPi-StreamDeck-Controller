@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS devices (
 )
 ''')
 
-# Create styles table with a device_id column
+# Create styles table with a `default` column
 cursor.execute('''
 CREATE TABLE IF NOT EXISTS styles (
     id INTEGER PRIMARY KEY,
@@ -25,12 +25,12 @@ CREATE TABLE IF NOT EXISTS styles (
     font_size INTEGER,
     highlight_bg_color TEXT,
     highlight_text_color TEXT,
-    default INTEGER DEFAULT 0,
+    `default` INTEGER DEFAULT 0,
     FOREIGN KEY(device_id) REFERENCES devices(id)
 )
 ''')
 
-# Create button_config table with a device_id column
+# Create button_config table
 cursor.execute('''
 CREATE TABLE IF NOT EXISTS button_config (
     id INTEGER PRIMARY KEY,
