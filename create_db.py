@@ -21,8 +21,6 @@ CREATE TABLE IF NOT EXISTS styles (
     name TEXT,
     bg_color TEXT,
     text_color TEXT,
-    font_path TEXT,
-    font_size INTEGER,
     highlight_bg_color TEXT,
     highlight_text_color TEXT,
     `default` INTEGER DEFAULT 0,
@@ -53,7 +51,16 @@ cursor.execute('''
 CREATE TABLE IF NOT EXISTS parameters (
     id INTEGER PRIMARY KEY,
     name TEXT UNIQUE,
-    value REAL
+    value TEXT
+)
+''')
+
+# Create generic_config table
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS generic_config (
+    id INTEGER PRIMARY KEY,
+    font_path TEXT,
+    font_size INTEGER
 )
 ''')
 

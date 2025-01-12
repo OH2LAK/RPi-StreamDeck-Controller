@@ -49,13 +49,11 @@ def add_style():
         name = request.form['name']
         bg_color = request.form['bg_color']
         text_color = request.form['text_color']
-        font_path = request.form['font_path']
-        font_size = request.form['font_size']
         highlight_bg_color = request.form['highlight_bg_color']
         highlight_text_color = request.form['highlight_text_color']
 
-        execute_db_query('INSERT INTO styles (device_id, name, bg_color, text_color, font_path, font_size, highlight_bg_color, highlight_text_color) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-                         (device_id, name, bg_color, text_color, font_path, font_size, highlight_bg_color, highlight_text_color))
+        execute_db_query('INSERT INTO styles (device_id, name, bg_color, text_color, highlight_bg_color, highlight_text_color) VALUES (?, ?, ?, ?, ?, ?)',
+                         (device_id, name, bg_color, text_color, highlight_bg_color, highlight_text_color))
         send_update_signal()
         return redirect(url_for('index'))
 
@@ -73,13 +71,11 @@ def edit_style(id):
     if request.method == 'POST':
         bg_color = request.form['bg_color']
         text_color = request.form['text_color']
-        font_path = request.form['font_path']
-        font_size = request.form['font_size']
         highlight_bg_color = request.form['highlight_bg_color']
         highlight_text_color = request.form['highlight_text_color']
 
-        execute_db_query('UPDATE styles SET bg_color = ?, text_color = ?, font_path = ?, font_size = ?, highlight_bg_color = ?, highlight_text_color = ? WHERE id = ?',
-                         (bg_color, text_color, font_path, font_size, highlight_bg_color, highlight_text_color, id))
+        execute_db_query('UPDATE styles SET bg_color = ?, text_color = ?, highlight_bg_color = ?, highlight_text_color = ? WHERE id = ?',
+                         (bg_color, text_color, highlight_bg_color, highlight_text_color, id))
         send_update_signal()
         return redirect(url_for('index'))
 
