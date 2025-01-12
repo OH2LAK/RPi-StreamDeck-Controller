@@ -1,0 +1,23 @@
+<!doctype html>
+<html>
+<head>
+    <title>Add Button Configuration</title>
+</head>
+<body>
+    <h1>Add Button Configuration</h1>
+    <form method="post">
+        <label for="key">Key:</label>
+        <input type="number" id="key" name="key"><br>
+        <label for="text">Text:</label>
+        <input type="text" id="text" name="text"><br>
+        <label for="style">Style:</label>
+        <select id="style" name="style">
+            {% for style in styles %}
+                <option value="{{ style.name }}">{{ style.name }}</option>
+            {% endfor %}
+        </select><br>
+        <input type="submit" value="Add Button Configuration">
+    </form>
+    <a href="{{ url_for('index') }}">Back</a>
+</body>
+</html>
