@@ -25,7 +25,12 @@ CREATE TABLE IF NOT EXISTS button_config (
     key INTEGER UNIQUE,
     text TEXT,
     style TEXT,
-    FOREIGN KEY(style) REFERENCES styles(name)
+    long_press_ack_style TEXT,
+    short_press TEXT,
+    long_press TEXT,
+    ack_action TEXT,
+    FOREIGN KEY(style) REFERENCES styles(name),
+    FOREIGN KEY(long_press_ack_style) REFERENCES styles(name)
 )
 ''')
 

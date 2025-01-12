@@ -15,8 +15,8 @@ button_config = {
         "text": "Button 1",  # Configurable text
         "short_press": "short_action_1",
         "long_press": "long_action_1",
-        "ack_action": "ack_action_1"
-    },
+        "ack_action": "ack_act
+    },ion_1"
     2: {
         "style": "default",
         "long_press_ack_style": "long_press_ack",

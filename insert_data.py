@@ -8,6 +8,7 @@ cursor = conn.cursor()
 styles_data = [
     ('default', '#000000', '#FFFFFF', 'Roboto-Medium.ttf', 14, '#333333', '#FFFFFF'),
     ('highlight', '#FFFFFF', '#000000', 'Roboto-Medium.ttf', 14, '#FFFF00', '#000000'),
+    ('long_press_ack', '#FF0000', '#FFFFFF', 'Roboto-Medium.ttf', 14, '#FF0000', '#FFFFFF'),  # Add long_press_ack style
     # Add more styles as needed
 ]
 
@@ -18,14 +19,13 @@ VALUES (?, ?, ?, ?, ?, ?, ?)
 
 # Insert button configurations
 button_config_data = [
-    (0, 'Button 1', 'default'),
-    (1, 'Button 2', 'highlight'),
-    # Add more button configurations as needed
+    (i, f'Button {i+1}', 'default' if i < 5 or i >= 10 else 'highlight', 'long_press_ack', f'short_action_{i+1}', f'long_action_{i+1}', f'ack_action_{i+1}')
+    for i in range(15)
 ]
 
 cursor.executemany('''
-INSERT OR IGNORE INTO button_config (key, text, style)
-VALUES (?, ?, ?)
+INSERT OR IGNORE INTO button_config (key, text, style, long_press_ack_style, short_press, long_press, ack_action)
+VALUES (?, ?, ?, ?, ?, ?, ?)
 ''', button_config_data)
 
 # Commit changes and close the connection
