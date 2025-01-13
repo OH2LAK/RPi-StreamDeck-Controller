@@ -1,35 +1,31 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="utf-8">
     <title>Add Button Configuration</title>
 </head>
 <body>
     <h1>Add Button Configuration</h1>
-    <form method="post">
+    <form action="{{ url_for('add_button_config') }}" method="post">
+        <label for="device_id">Device ID:</label>
+        <input type="text" id="device_id" name="device_id" required><br>
         <label for="key">Key:</label>
-        <input type="number" id="key" name="key"><br>
+        <input type="number" id="key" name="key" required><br>
         <label for="text">Text:</label>
-        <input type="text" id="text" name="text"><br>
+        <input type="text" id="text" name="text" required><br>
         <label for="style">Style:</label>
-        <select id="style" name="style">
+        <select id="style" name="style" required>
             {% for style in styles %}
-                <option value="{{ style.name }}">{{ style.name }}</option>
+            <option value="{{ style['name'] }}">{{ style['name'] }}</option>
             {% endfor %}
         </select><br>
-        <label for="long_press_ack_style">Long Press Ack Style:</label>
-        <select id="long_press_ack_style" name="long_press_ack_style">
-            {% for style in styles %}
-                <option value="{{ style.name }}">{{ style.name }}</option>
-            {% endfor %}
-        </select><br>
-        <label for="short_press">Short Press Action:</label>
+        <label for="short_press">Short Press:</label>
         <input type="text" id="short_press" name="short_press"><br>
-        <label for="long_press">Long Press Action:</label>
+        <label for="long_press">Long Press:</label>
         <input type="text" id="long_press" name="long_press"><br>
         <label for="ack_action">Ack Action:</label>
         <input type="text" id="ack_action" name="ack_action"><br>
-        <input type="submit" value="Add Button Configuration">
+        <button type="submit">Add</button>
     </form>
-    <a href="{{ url_for('index') }}">Back</a>
 </body>
 </html>

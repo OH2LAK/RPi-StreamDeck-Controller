@@ -1,33 +1,27 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="utf-8">
     <title>Edit Button Configuration</title>
 </head>
 <body>
-    <h1>Edit Button Configuration for Key {{ key }}</h1>
-    <form method="post">
+    <h1>Edit Button Configuration</h1>
+    <form action="{{ url_for('edit_button_config', id=button_config['id']) }}" method="post">
         <label for="text">Text:</label>
-        <input type="text" id="text" name="text" value="{{ button_config.text }}"><br>
+        <input type="text" id="text" name="text" value="{{ button_config['text'] }}" required><br>
         <label for="style">Style:</label>
-        <select id="style" name="style">
+        <select id="style" name="style" required>
             {% for style in styles %}
-                <option value="{{ style.name }}" {% if style.name == button_config.style %}selected{% endif %}>{{ style.name }}</option>
+            <option value="{{ style['name'] }}" {% if style['name'] == button_config['style'] %}selected{% endif %}>{{ style['name'] }}</option>
             {% endfor %}
         </select><br>
-        <label for="long_press_ack_style">Long Press Ack Style:</label>
-        <select id="long_press_ack_style" name="long_press_ack_style">
-            {% for style in styles %}
-                <option value="{{ style.name }}" {% if style.name == button_config.long_press_ack_style %}selected{% endif %}>{{ style.name }}</option>
-            {% endfor %}
-        </select><br>
-        <label for="short_press">Short Press Action:</label>
-        <input type="text" id="short_press" name="short_press" value="{{ button_config.short_press }}"><br>
-        <label for="long_press">Long Press Action:</label>
-        <input type="text" id="long_press" name="long_press" value="{{ button_config.long_press }}"><br>
+        <label for="short_press">Short Press:</label>
+        <input type="text" id="short_press" name="short_press" value="{{ button_config['short_press'] }}"><br>
+        <label for="long_press">Long Press:</label>
+        <input type="text" id="long_press" name="long_press" value="{{ button_config['long_press'] }}"><br>
         <label for="ack_action">Ack Action:</label>
-        <input type="text" id="ack_action" name="ack_action" value="{{ button_config.ack_action }}"><br>
-        <input type="submit" value="Update Button Configuration">
+        <input type="text" id="ack_action" name="ack_action" value="{{ button_config['ack_action'] }}"><br>
+        <button type="submit">Save</button>
     </form>
-    <a href="{{ url_for('index') }}">Back</a>
 </body>
 </html>

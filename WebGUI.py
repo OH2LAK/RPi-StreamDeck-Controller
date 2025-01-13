@@ -1,7 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for
 import sqlite3
-import json
-import requests  # Add this import statement
+import requests
 
 app = Flask(__name__)
 
@@ -48,13 +47,18 @@ def index():
 def add_style():
     if request.method == 'POST':
         name = request.form['name']
-        bg_color = request.form['bg_color']
-        text_color = request.form['text_color']
-        highlight_bg_color = request.form['highlight_bg_color']
-        highlight_text_color = request.form['highlight_text_color']
+        normal_bg_color = request.form['normal_bg_color']
+        normal_text_color = request.form['normal_text_color']
+        normal_font_size = request.form['normal_font_size']
+        short_press_bg_color = request.form['short_press_bg_color']
+        short_press_text_color = request.form['short_press_text_color']
+        short_press_font_size = request.form['short_press_font_size']
+        long_press_bg_color = request.form['long_press_bg_color']
+        long_press_text_color = request.form['long_press_text_color']
+        long_press_font_size = request.form['long_press_font_size']
 
-        execute_db_query('INSERT INTO styles (name, bg_color, text_color, highlight_bg_color, highlight_text_color) VALUES (?, ?, ?, ?, ?)',
-                         (name, bg_color, text_color, highlight_bg_color, highlight_text_color))
+        execute_db_query('INSERT INTO styles (name, normal_bg_color, normal_text_color, normal_font_size, short_press_bg_color, short_press_text_color, short_press_font_size, long_press_bg_color, long_press_text_color, long_press_font_size) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                         (name, normal_bg_color, normal_text_color, normal_font_size, short_press_bg_color, short_press_text_color, short_press_font_size, long_press_bg_color, long_press_text_color, long_press_font_size))
         return redirect(url_for('index'))
 
     return render_template('add_style.html')
@@ -66,13 +70,18 @@ def edit_style(id):
     conn.close()
 
     if request.method == 'POST':
-        bg_color = request.form['bg_color']
-        text_color = request.form['text_color']
-        highlight_bg_color = request.form['highlight_bg_color']
-        highlight_text_color = request.form['highlight_text_color']
+        normal_bg_color = request.form['normal_bg_color']
+        normal_text_color = request.form['normal_text_color']
+        normal_font_size = request.form['normal_font_size']
+        short_press_bg_color = request.form['short_press_bg_color']
+        short_press_text_color = request.form['short_press_text_color']
+        short_press_font_size = request.form['short_press_font_size']
+        long_press_bg_color = request.form['long_press_bg_color']
+        long_press_text_color = request.form['long_press_text_color']
+        long_press_font_size = request.form['long_press_font_size']
 
-        execute_db_query('UPDATE styles SET bg_color = ?, text_color = ?, highlight_bg_color = ?, highlight_text_color = ? WHERE id = ?',
-                         (bg_color, text_color, highlight_bg_color, highlight_text_color, id))
+        execute_db_query('UPDATE styles SET normal_bg_color = ?, normal_text_color = ?, normal_font_size = ?, short_press_bg_color = ?, short_press_text_color = ?, short_press_font_size = ?, long_press_bg_color = ?, long_press_text_color = ?, long_press_font_size = ? WHERE id = ?',
+                         (normal_bg_color, normal_text_color, normal_font_size, short_press_bg_color, short_press_text_color, short_press_font_size, long_press_bg_color, long_press_text_color, long_press_font_size, id))
         return redirect(url_for('index'))
 
     return render_template('edit_style.html', style=style)
@@ -81,9 +90,8 @@ def edit_style(id):
 def delete_style(id):
     conn = get_db_connection()
     style = conn.execute('SELECT * FROM styles WHERE id = ?', (id,)).fetchone()
-    default_style = conn.execute('SELECT name FROM styles WHERE device_id = ? AND `default` = 1', (style['device_id'],)).fetchone()['name']
+    default_style = conn.execute('SELECT name FROM styles WHERE name = "Default"').fetchone()['name']
     conn.execute('UPDATE button_config SET style = ? WHERE style = ?', (default_style, style['name']))
-    conn.execute('UPDATE button_config SET long_press_ack_style = ? WHERE long_press_ack_style = ?', (default_style, style['name']))
     conn.execute('DELETE FROM styles WHERE id = ?', (id,))
     conn.commit()
     conn.close()
@@ -96,17 +104,16 @@ def add_button_config():
         key = request.form['key']
         text = request.form['text']
         style = request.form['style']
-        long_press_ack_style = request.form['long_press_ack_style']
         short_press = request.form['short_press']
         long_press = request.form['long_press']
         ack_action = request.form['ack_action']
 
         try:
-            execute_db_query('INSERT INTO button_config (device_id, key, text, style, long_press_ack_style, short_press, long_press, ack_action) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-                             (device_id, key, text, style, long_press_ack_style, short_press, long_press, ack_action))
+            execute_db_query('INSERT INTO button_config (device_id, key, text, style, short_press, long_press, ack_action) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                             (device_id, key, text, style, short_press, long_press, ack_action))
         except sqlite3.IntegrityError:
-            execute_db_query('UPDATE button_config SET text = ?, style = ?, long_press_ack_style = ?, short_press = ?, long_press = ?, ack_action = ? WHERE device_id = ? AND key = ?',
-                             (text, style, long_press_ack_style, short_press, long_press, ack_action, device_id, key))
+            execute_db_query('UPDATE button_config SET text = ?, style = ?, short_press = ?, long_press = ?, ack_action = ? WHERE device_id = ? AND key = ?',
+                             (text, style, short_press, long_press, ack_action, device_id, key))
         return redirect(url_for('index'))
 
     conn = get_db_connection()
@@ -124,13 +131,12 @@ def edit_button_config(id):
     if request.method == 'POST':
         text = request.form['text']
         style = request.form['style']
-        long_press_ack_style = request.form['long_press_ack_style']
         short_press = request.form['short_press']
         long_press = request.form['long_press']
         ack_action = request.form['ack_action']
 
-        execute_db_query('UPDATE button_config SET text = ?, style = ?, long_press_ack_style = ?, short_press = ?, long_press = ?, ack_action = ? WHERE id = ?',
-                         (text, style, long_press_ack_style, short_press, long_press, ack_action, id))
+        execute_db_query('UPDATE button_config SET text = ?, style = ?, short_press = ?, long_press = ?, ack_action = ? WHERE id = ?',
+                         (text, style, short_press, long_press, ack_action, id))
         return redirect(url_for('index'))
 
     return render_template('edit_button_config.html', button_config=button_config, styles=styles)
