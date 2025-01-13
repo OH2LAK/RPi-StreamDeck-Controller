@@ -52,7 +52,7 @@ def get_ip_address():
     ip_address = netifaces.ifaddresses(default_interface)[netifaces.AF_INET][0]['addr']
     return ip_address
 
-def display_configuration_message(deck, font):
+def display_configuration_message(font):
     message = "USE WEB GUI TO CONFIGURE"
     words = message.split()
     ip_address = get_ip_address()
@@ -61,14 +61,14 @@ def display_configuration_message(deck, font):
 
     for i in range(6):
         text = words[i] if i < len(words) else ""
-        image = create_image(deck.key_image_format()['size'], text, '#000000', '#FFFFFF', 14)
-        deck.set_key_image(i, image)
+        image = create_image((72, 72), text, '#000000', '#FFFFFF', 14)
+        images[i] = image
 
-    deck.set_key_image(6, create_image(deck.key_image_format()['size'], "IP", '#000000', '#FFFFFF', 14))
-    deck.set_key_image(7, create_image(deck.key_image_format()['size'], "address", '#000000', '#FFFFFF', 14))
+    images[6] = create_image((72, 72), "IP", '#000000', '#FFFFFF', 14)
+    images[7] = create_image((72, 72), "address", '#000000', '#FFFFFF', 14)
     for i in range(4):
         print(f"IP Part {i}: {ip_parts[i]}")  # Debugging: Print each IP part
-        deck.set_key_image(8 + i, create_image(deck.key_image_format()['size'], ip_parts[i], '#000000', '#FFFFFF', 14))
+        images[8 + i] = create_image((72, 72), ip_parts[i], '#000000', '#FFFFFF', 14)
 
 def insert_default_configuration(device_id):
     conn = sqlite3.connect('streamdeck.db')
@@ -109,15 +109,15 @@ def load_style(style_name):
     conn.close()
     return style
 
-def update_button_images(deck, button_mappings):
+def update_button_images(button_mappings, font):
     for mapping in button_mappings:
         key = mapping['key']
         text = mapping['text']
         style = load_style(mapping['style'])
-        image = create_image(deck.key_image_format()['size'], text, style['normal_bg_color'], style['normal_text_color'], style['normal_font_size'])
-        deck.set_key_image(key, image)
+        image = create_image((72, 72), text, style['normal_bg_color'], style['normal_text_color'], style['normal_font_size'])
+        images[key] = image
 
-def handle_key_event(deck, key, state):
+def handle_key_event(key, state):
     if state:
         key_press_times[key] = time.time()
     else:
@@ -134,27 +134,14 @@ def main():
     device_info = get_device_info()
     if device_info:
         logging.info(f"Connected to {device_info['model']} with {device_info['button_count']} buttons.")
+        font = ImageFont.truetype("Roboto-Medium.ttf", 14)
 
         button_mappings = load_button_mappings(device_info['serial_number'], device_info['button_count'])
-
-        # Access the actual StreamDeck device
-        from StreamDeck import DeviceManager
-        decks = DeviceManager.DeviceManager().enumerate()
-        if not decks:
-            logging.error("No StreamDeck devices found.")
-            return
-        deck = decks[0]
-        deck.open()
-        deck.reset()
-        deck.set_brightness(30)
-
-        update_button_images(deck, button_mappings)
+        update_button_images(button_mappings, font)
 
         # Initialize key_press_times for all keys
         for key in range(device_info['button_count']):
             key_press_times[key] = 0
-
-        deck.set_key_callback(handle_key_event)
 
         try:
             while not stop_flag.is_set():
@@ -163,15 +150,12 @@ def main():
                     device_state = response.json()
                     for key, state in device_state.items():
                         if state == "pressed":
-                            handle_key_event(deck, key, True)
+                            handle_key_event(key, True)
                         else:
-                            handle_key_event(deck, key, False)
+                            handle_key_event(key, False)
                 time.sleep(0.1)
         except KeyboardInterrupt:
             stop_flag.set()
-        finally:
-            deck.reset()
-            deck.close()
     else:
         logging.error("No StreamDeck device connected.")
 
