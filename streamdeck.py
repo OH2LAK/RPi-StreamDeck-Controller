@@ -2,6 +2,7 @@ import sys
 import os
 import time
 from StreamDeck import DeviceManager
+from StreamDeck.Transport.Transport import TransportError
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 import io
 import sqlite3
@@ -10,6 +11,7 @@ import socket
 import netifaces
 import requests
 from flask import Flask, jsonify
+import logging
 
 # Ensure the script's directory is in the Python path
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -26,6 +28,9 @@ long_press_ack_keys = set()  # Track keys that are in long press acknowledgment 
 stop_flag = threading.Event()
 
 app = Flask(__name__)
+
+# Configure logging
+logging.basicConfig(level=logging.DEBUG)
 
 def create_image(size, text, style, font):
     image = Image.new('RGB', size, style['bg_color'])
@@ -214,6 +219,71 @@ def device_info():
     }
     return jsonify(device_info)
 
+def get_streamdeck_info():
+    decks = DeviceManager.DeviceManager().enumerate()
+    if not decks:
+        logging.error('No StreamDeck devices found')
+        return None, 0
+    deck = decks[0]
+    try:
+        deck.open()
+        deck_info = {
+            'model': deck.deck_type(),
+            'button_count': deck.key_count()
+        }
+        deck.close()
+        return deck_info, deck_info['button_count']
+    except TransportError as e:
+        logging.error(f'Could not open StreamDeck device: {e}')
+        return None, 0
+
+def create_button_image(text, style, font):
+    image = Image.new('RGB', (72, 72), style['bg_color'])
+    draw = ImageDraw.Draw(image)
+    text_bbox = draw.textbbox((0, 0), text, font=font)
+    text_width = text_bbox[2] - text_bbox[0]
+    text_height = text_bbox[3] - text_bbox[1]
+    text_position = ((72 - text_width) // 2, (72 - text_height) // 2)
+    draw.text(text_position, text, font=font, fill=style['text_color'])
+    image = ImageOps.mirror(image)  # Flip the image horizontally to fix mirrored text
+    image_bytes = io.BytesIO()
+    image.save(image_bytes, format='BMP')
+    return image_bytes.getvalue()
+
+def load_button_mappings(button_count):
+    conn = sqlite3.connect('streamdeck.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM button_config WHERE key < ?', (button_count,))
+    button_mappings = cursor.fetchall()
+    conn.close()
+    return button_mappings
+
+def store_button_images(button_mappings, font):
+    conn = sqlite3.connect('streamdeck.db')
+    cursor = conn.cursor()
+    for mapping in button_mappings:
+        key = mapping['key']
+        text = mapping['text']
+        style = {
+            'bg_color': mapping['bg_color'],
+            'text_color': mapping['text_color']
+        }
+        image_data = create_button_image(text, style, font)
+        cursor.execute('UPDATE button_config SET image = ? WHERE key = ?', (image_data, key))
+    conn.commit()
+    conn.close()
+
+def main():
+    deck_info, button_count = get_streamdeck_info()
+    if deck_info:
+        logging.info(f"Connected to {deck_info['model']} with {button_count} buttons.")
+        button_mappings = load_button_mappings(button_count)
+        logging.info(f"Loaded button mappings: {button_mappings}")
+        font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 14)
+        store_button_images(button_mappings, font)
+    else:
+        logging.error("No StreamDeck device connected.")
+
 try:
     threading.Thread(target=stop_program).start()  # Start the stop program thread
 
@@ -320,3 +390,6 @@ try:
 finally:
     deck.close()
     app.run(host='0.0.0.0', port=5001)
+
+if __name__ == '__main__':
+    main()

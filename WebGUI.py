@@ -1,9 +1,12 @@
 from flask import Flask, render_template, request, redirect, url_for
 import sqlite3
-import socket
-import requests
+import redis
+import json
 
 app = Flask(__name__)
+
+# Configure Redis
+redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
 
 def get_db_connection():
     conn = sqlite3.connect('streamdeck.db')
@@ -22,14 +25,11 @@ def send_update_signal():
         s.sendall(b'update')
 
 def get_connected_device():
-    try:
-        response = requests.get('http://localhost:5001/api/device_info')
-        if response.status_code == 200:
-            return response.json()
-        else:
-            print(f"Error fetching device info: {response.status_code} {response.text}")
-    except requests.exceptions.RequestException as e:
-        print(f"RequestException: {e}")
+    pubsub = redis_client.pubsub()
+    pubsub.subscribe('device_info_channel')
+    for message in pubsub.listen():
+        if message['type'] == 'message':
+            return json.loads(message['data'])
     return None
 
 @app.route('/')
@@ -37,55 +37,38 @@ def index():
     conn = get_db_connection()
     device_info = get_connected_device()
     if device_info:
-        device = conn.execute('SELECT * FROM devices WHERE serial_number = ?', (device_info['serial_number'],)).fetchone()
-        if not device:
-            conn.execute('INSERT INTO devices (model, serial_number) VALUES (?, ?)', (device_info['model'], device_info['serial_number']))
-            conn.commit()
-            device = conn.execute('SELECT * FROM devices WHERE serial_number = ?', (device_info['serial_number'],)).fetchone()
-        styles = conn.execute('SELECT * FROM styles WHERE device_id = ?', (device['id'],)).fetchall()
-        button_configs = conn.execute('SELECT * FROM button_config WHERE device_id = ?', (device['id'],)).fetchall()
+        button_count = device_info['button_count']
+        styles = conn.execute('SELECT * FROM styles').fetchall()
+        button_configs = conn.execute('SELECT * FROM button_config WHERE key < ?', (button_count,)).fetchall()
         parameters = conn.execute('SELECT * FROM parameters').fetchall()
     else:
-        device = None
+        button_count = 0
         styles = []
         button_configs = []
         parameters = []
     conn.close()
-    return render_template('index.html', device=device, styles=styles, button_configs=button_configs, parameters=parameters)
+    return render_template('index.html', device=device_info, button_count=button_count, styles=styles, button_configs=button_configs, parameters=parameters)
 
 @app.route('/add_style', methods=('GET', 'POST'))
 def add_style():
     if request.method == 'POST':
-        device_id = request.form['device_id']
         name = request.form['name']
         bg_color = request.form['bg_color']
         text_color = request.form['text_color']
         highlight_bg_color = request.form['highlight_bg_color']
         highlight_text_color = request.form['highlight_text_color']
 
-        execute_db_query('INSERT INTO styles (device_id, name, bg_color, text_color, highlight_bg_color, highlight_text_color) VALUES (?, ?, ?, ?, ?, ?)',
-                         (device_id, name, bg_color, text_color, highlight_bg_color, highlight_text_color))
+        execute_db_query('INSERT INTO styles (name, bg_color, text_color, highlight_bg_color, highlight_text_color) VALUES (?, ?, ?, ?, ?)',
+                         (name, bg_color, text_color, highlight_bg_color, highlight_text_color))
         send_update_signal()
         return redirect(url_for('index'))
 
-    conn = get_db_connection()
-    device_info = get_connected_device()
-    if device_info:
-        device = conn.execute('SELECT * FROM devices WHERE serial_number = ?', (device_info['serial_number'],)).fetchone()
-    else:
-        device = None
-    conn.close()
-    return render_template('add_style.html', device=device)
+    return render_template('add_style.html')
 
 @app.route('/edit_style/<int:id>', methods=('GET', 'POST'))
 def edit_style(id):
     conn = get_db_connection()
     style = conn.execute('SELECT * FROM styles WHERE id = ?', (id,)).fetchone()
-    device_info = get_connected_device()
-    if device_info:
-        device = conn.execute('SELECT * FROM devices WHERE serial_number = ?', (device_info['serial_number'],)).fetchone()
-    else:
-        device = None
     conn.close()
 
     if request.method == 'POST':
@@ -99,7 +82,7 @@ def edit_style(id):
         send_update_signal()
         return redirect(url_for('index'))
 
-    return render_template('edit_style.html', style=style, device=device)
+    return render_template('edit_style.html', style=style)
 
 @app.route('/delete_style/<int:id>', methods=('POST',))
 def delete_style(id):
@@ -145,7 +128,7 @@ def add_button_config():
 def edit_button_config(id):
     conn = get_db_connection()
     button_config = conn.execute('SELECT * FROM button_config WHERE id = ?', (id,)).fetchone()
-    styles = conn.execute('SELECT name FROM styles WHERE device_id = ?', (button_config['device_id'],)).fetchall()
+    styles = conn.execute('SELECT name FROM styles').fetchall()
     conn.close()
 
     if request.method == 'POST':

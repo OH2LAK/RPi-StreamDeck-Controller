@@ -19,7 +19,8 @@ def device_info():
         deck.open()
         device_info = {
             'model': deck.deck_type(),
-            'serial_number': deck.get_serial_number()
+            'serial_number': deck.get_serial_number(),
+            'button_count': deck.key_count()
         }
         deck.close()
         return jsonify(device_info)
