@@ -46,7 +46,6 @@ def create_image(size, text, style, font):
     draw.text(text_position, text, font=font, fill=style['text_color'])
     
     image = ImageOps.mirror(image)  # Flip the image horizontally to fix mirrored text
-    
     image_bytes = io.BytesIO()
     image.save(image_bytes, format='BMP')
     return image_bytes.getvalue()
@@ -140,7 +139,7 @@ def main():
     device_info = get_device_info()
     if device_info:
         logging.info(f"Connected to {device_info['model']} with {device_info['button_count']} buttons.")
-        font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 14)
+        font = ImageFont.truetype("Roboto-Medium.ttf", 14)
         deck = DeviceManager.DeviceManager().enumerate()[0]
         deck.open()
         deck.reset()
