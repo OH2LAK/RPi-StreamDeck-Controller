@@ -10,6 +10,8 @@ import netifaces
 import requests
 from flask import Flask, jsonify
 import logging
+from StreamDeck import DeviceManager
+from StreamDeck.Transport.Transport import TransportError
 
 # Ensure the script's directory is in the Python path
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -102,11 +104,61 @@ def get_device_info():
         logging.error(f"RequestException: {e}")
     return None
 
+def load_button_mappings(device_id, button_count):
+    conn = sqlite3.connect('streamdeck.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM button_config WHERE device_id = ? AND key < ?', (device_id, button_count))
+    button_mappings = cursor.fetchall()
+    conn.close()
+    return button_mappings
+
+def update_button_images(deck, button_mappings, font):
+    for mapping in button_mappings:
+        key = mapping['key']
+        text = mapping['text']
+        style = {
+            'bg_color': mapping['bg_color'],
+            'text_color': mapping['text_color']
+        }
+        image = create_image(deck.key_image_format()['size'], text, style, font)
+        deck.set_key_image(key, image)
+
+def handle_key_event(deck, key, state):
+    if state:
+        key_press_times[key] = time.time()
+    else:
+        press_duration = time.time() - key_press_times[key]
+        if press_duration > 1.0:  # Long press
+            logging.info(f"Key {key} long pressed")
+            long_press_ack_keys.add(key)
+        else:  # Short press
+            logging.info(f"Key {key} short pressed")
+            if key in long_press_ack_keys:
+                long_press_ack_keys.remove(key)
+
 def main():
     device_info = get_device_info()
     if device_info:
         logging.info(f"Connected to {device_info['model']} with {device_info['button_count']} buttons.")
-        # Add your logic to handle button interactions here
+        font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 14)
+        deck = DeviceManager.DeviceManager().enumerate()[0]
+        deck.open()
+        deck.reset()
+        deck.set_brightness(30)
+
+        button_mappings = load_button_mappings(device_info['serial_number'], device_info['button_count'])
+        update_button_images(deck, button_mappings, font)
+
+        deck.set_key_callback(handle_key_event)
+
+        try:
+            while not stop_flag.is_set():
+                time.sleep(0.1)
+        except KeyboardInterrupt:
+            stop_flag.set()
+        finally:
+            deck.reset()
+            deck.close()
     else:
         logging.error("No StreamDeck device connected.")
 
