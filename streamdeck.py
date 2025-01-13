@@ -81,7 +81,7 @@ def insert_default_configuration(device_id):
     cursor.execute('SELECT COUNT(*) FROM button_config WHERE device_id = ?', (device_id,))
     count = cursor.fetchone()[0]
     if count == 0:
-        for key in range(15):  # Assuming a default of 15 buttons
+        for key in range(32):  # Assuming a default of 32 buttons
             cursor.execute('INSERT INTO button_config (device_id, key, text, style, long_press_ack_style, short_press, long_press, ack_action) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
                            (device_id, key, f'Button {key}', 'default', 'default', '', '', ''))
     conn.commit()
