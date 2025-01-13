@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for
 import sqlite3
 import json
+import requests  # Add this import statement
 
 app = Flask(__name__)
 
@@ -86,7 +87,6 @@ def delete_style(id):
     conn.execute('DELETE FROM styles WHERE id = ?', (id,))
     conn.commit()
     conn.close()
-    send_update_signal()
     return redirect(url_for('index'))
 
 @app.route('/add_button_config', methods=('GET', 'POST'))
@@ -107,14 +107,12 @@ def add_button_config():
         except sqlite3.IntegrityError:
             execute_db_query('UPDATE button_config SET text = ?, style = ?, long_press_ack_style = ?, short_press = ?, long_press = ?, ack_action = ? WHERE device_id = ? AND key = ?',
                              (text, style, long_press_ack_style, short_press, long_press, ack_action, device_id, key))
-        send_update_signal()
         return redirect(url_for('index'))
 
     conn = get_db_connection()
-    device = conn.execute('SELECT * FROM devices LIMIT 1').fetchone()
-    styles = conn.execute('SELECT name FROM styles WHERE device_id = ?', (device['id'],)).fetchall()
+    styles = conn.execute('SELECT name FROM styles').fetchall()
     conn.close()
-    return render_template('add_button_config.html', device=device, styles=styles)
+    return render_template('add_button_config.html', styles=styles)
 
 @app.route('/edit_button_config/<int:id>', methods=('GET', 'POST'))
 def edit_button_config(id):
@@ -133,7 +131,6 @@ def edit_button_config(id):
 
         execute_db_query('UPDATE button_config SET text = ?, style = ?, long_press_ack_style = ?, short_press = ?, long_press = ?, ack_action = ? WHERE id = ?',
                          (text, style, long_press_ack_style, short_press, long_press, ack_action, id))
-        send_update_signal()
         return redirect(url_for('index'))
 
     return render_template('edit_button_config.html', button_config=button_config, styles=styles)
@@ -147,7 +144,6 @@ def edit_parameter(id):
     if request.method == 'POST':
         value = request.form['value']
         execute_db_query('UPDATE parameters SET value = ? WHERE id = ?', (value, id))
-        send_update_signal()
         return redirect(url_for('index'))
 
     return render_template('edit_parameter.html', parameter=parameter)
