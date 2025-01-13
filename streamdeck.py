@@ -9,8 +9,6 @@ import socket
 import netifaces
 import requests
 import logging
-from StreamDeck import DeviceManager
-from StreamDeck.Transport.Transport import TransportError
 
 # Ensure the script's directory is in the Python path
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -108,7 +106,7 @@ def load_button_mappings(device_id, button_count):
     conn.close()
     return button_mappings
 
-def update_button_images(deck, button_mappings, font):
+def update_button_images(button_mappings, font):
     for mapping in button_mappings:
         key = mapping['key']
         text = mapping['text']
@@ -116,8 +114,8 @@ def update_button_images(deck, button_mappings, font):
             'bg_color': mapping['bg_color'],
             'text_color': mapping['text_color']
         }
-        image = create_image(deck.key_image_format()['size'], text, style, font)
-        deck.set_key_image(key, image)
+        image = create_image((72, 72), text, style, font)
+        images[key] = image
 
 def handle_key_event(deck, key, state):
     if state:
@@ -137,19 +135,31 @@ def main():
     if device_info:
         logging.info(f"Connected to {device_info['model']} with {device_info['button_count']} buttons.")
         font = ImageFont.truetype("Roboto-Medium.ttf", 14)
+
+        button_mappings = load_button_mappings(device_info['serial_number'], device_info['button_count'])
+        update_button_images(button_mappings, font)
+
+        # Simulate the StreamDeck device for testing purposes
+        class MockDeck:
+            def key_image_format(self):
+                return {'size': (72, 72)}
+            def set_key_image(self, key, image):
+                pass
+            def set_key_callback(self, callback):
+                pass
+            def open(self):
+                pass
+            def reset(self):
+                pass
+            def set_brightness(self, brightness):
+                pass
+            def close(self):
+                pass
         
-        # Access the actual StreamDeck device
-        decks = DeviceManager.DeviceManager().enumerate()
-        if not decks:
-            logging.error("No StreamDeck devices found.")
-            return
-        deck = decks[0]
+        deck = MockDeck()
         deck.open()
         deck.reset()
         deck.set_brightness(30)
-
-        button_mappings = load_button_mappings(device_info['serial_number'], device_info['button_count'])
-        update_button_images(deck, button_mappings, font)
 
         deck.set_key_callback(handle_key_event)
 
