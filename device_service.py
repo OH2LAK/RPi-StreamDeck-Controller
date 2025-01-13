@@ -28,5 +28,21 @@ def device_info():
         app.logger.error(f'Could not open StreamDeck device: {e}')
         return jsonify({'error': 'Could not open StreamDeck device'}), 500
 
+@app.route('/api/device_state', methods=['GET'])
+def device_state():
+    decks = DeviceManager.DeviceManager().enumerate()
+    if not decks:
+        app.logger.error('No StreamDeck devices found')
+        return jsonify({'error': 'No StreamDeck devices found'}), 404
+    deck = decks[0]
+    try:
+        deck.open()
+        state = {key: 'pressed' if deck.key_states()[key] else 'released' for key in range(deck.key_count())}
+        deck.close()
+        return jsonify(state)
+    except TransportError as e:
+        app.logger.error(f'Could not open StreamDeck device: {e}')
+        return jsonify({'error': 'Could not open StreamDeck device'}), 500
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001)
