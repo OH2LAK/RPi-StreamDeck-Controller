@@ -27,8 +27,9 @@ stop_flag = threading.Event()
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
 
-def create_image(size, text, style, font):
-    image = Image.new('RGB', size, style['bg_color'])
+def create_image(size, text, bg_color, text_color, font_size):
+    font = ImageFont.truetype("Roboto-Medium.ttf", font_size)
+    image = Image.new('RGB', size, bg_color)
     draw = ImageDraw.Draw(image)
     
     # Calculate text position, centered
@@ -38,18 +39,12 @@ def create_image(size, text, style, font):
     text_position = ((size[0] - text_width) // 2, (size[1] - text_height) // 2)
     
     # Draw the text on the image
-    draw.text(text_position, text, font=font, fill=style['text_color'])
+    draw.text(text_position, text, font=font, fill=text_color)
     
     image = ImageOps.mirror(image)  # Flip the image horizontally to fix mirrored text
     image_bytes = io.BytesIO()
     image.save(image_bytes, format='BMP')
     return image_bytes.getvalue()
-
-def create_highlighted_image(size, text, style, font):
-    return create_image(size, text, {
-        'bg_color': style['highlight_bg_color'],
-        'text_color': style['highlight_text_color'],
-    }, font)
 
 def get_ip_address():
     gws = netifaces.gateways()
@@ -66,14 +61,14 @@ def display_configuration_message(deck, font):
 
     for i in range(6):
         text = words[i] if i < len(words) else ""
-        image = create_image(deck.key_image_format()['size'], text, {'bg_color': '#000000', 'text_color': '#FFFFFF'}, font)
+        image = create_image(deck.key_image_format()['size'], text, '#000000', '#FFFFFF', 14)
         deck.set_key_image(i, image)
 
-    deck.set_key_image(6, create_image(deck.key_image_format()['size'], "IP", {'bg_color': '#000000', 'text_color': '#FFFFFF'}, font))
-    deck.set_key_image(7, create_image(deck.key_image_format()['size'], "address", {'bg_color': '#000000', 'text_color': '#FFFFFF'}, font))
+    deck.set_key_image(6, create_image(deck.key_image_format()['size'], "IP", '#000000', '#FFFFFF', 14))
+    deck.set_key_image(7, create_image(deck.key_image_format()['size'], "address", '#000000', '#FFFFFF', 14))
     for i in range(4):
         print(f"IP Part {i}: {ip_parts[i]}")  # Debugging: Print each IP part
-        deck.set_key_image(8 + i, create_image(deck.key_image_format()['size'], ip_parts[i], {'bg_color': '#000000', 'text_color': '#FFFFFF'}, font))
+        deck.set_key_image(8 + i, create_image(deck.key_image_format()['size'], ip_parts[i], '#000000', '#FFFFFF', 14))
 
 def insert_default_configuration(device_id):
     conn = sqlite3.connect('streamdeck.db')
@@ -82,8 +77,8 @@ def insert_default_configuration(device_id):
     count = cursor.fetchone()[0]
     if count == 0:
         for key in range(32):  # Assuming a default of 32 buttons
-            cursor.execute('INSERT INTO button_config (device_id, key, text, style, long_press_ack_style, short_press, long_press, ack_action) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-                           (device_id, key, f'Button {key}', 'default', 'default', '', '', ''))
+            cursor.execute('INSERT INTO button_config (device_id, key, text, style, short_press, long_press, ack_action, image) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+                           (device_id, key, f'Button {key}', 'Default', '', '', '', None))
     conn.commit()
     conn.close()
 
@@ -106,22 +101,27 @@ def load_button_mappings(device_id, button_count):
     conn.close()
     return button_mappings
 
-def update_button_images(button_mappings, font):
+def load_style(style_name):
+    conn = sqlite3.connect('streamdeck.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM styles WHERE name = ?', (style_name,))
+    style = cursor.fetchone()
+    conn.close()
+    return style
+
+def update_button_images(deck, button_mappings):
     for mapping in button_mappings:
         key = mapping['key']
         text = mapping['text']
-        style = {
-            'bg_color': mapping['bg_color'],
-            'text_color': mapping['text_color']
-        }
-        image = create_image((72, 72), text, style, font)
-        images[key] = image
+        style = load_style(mapping['style'])
+        image = create_image(deck.key_image_format()['size'], text, style['normal_bg_color'], style['normal_text_color'], style['normal_font_size'])
+        deck.set_key_image(key, image)
 
 def handle_key_event(deck, key, state):
     if state:
         key_press_times[key] = time.time()
     else:
-        press_duration = time.time() - key_press_times[key]
+        press_duration = time.time() - key_press_times.get(key, time.time())
         if press_duration > 1.0:  # Long press
             logging.info(f"Key {key} long pressed")
             long_press_ack_keys.add(key)
@@ -134,28 +134,44 @@ def main():
     device_info = get_device_info()
     if device_info:
         logging.info(f"Connected to {device_info['model']} with {device_info['button_count']} buttons.")
-        font = ImageFont.truetype("Roboto-Medium.ttf", 14)
 
         button_mappings = load_button_mappings(device_info['serial_number'], device_info['button_count'])
-        update_button_images(button_mappings, font)
 
-        # Fetch the device state and update images through device_service.py
-        while not stop_flag.is_set():
-            try:
+        # Access the actual StreamDeck device
+        from StreamDeck import DeviceManager
+        decks = DeviceManager.DeviceManager().enumerate()
+        if not decks:
+            logging.error("No StreamDeck devices found.")
+            return
+        deck = decks[0]
+        deck.open()
+        deck.reset()
+        deck.set_brightness(30)
+
+        update_button_images(deck, button_mappings)
+
+        # Initialize key_press_times for all keys
+        for key in range(device_info['button_count']):
+            key_press_times[key] = 0
+
+        deck.set_key_callback(handle_key_event)
+
+        try:
+            while not stop_flag.is_set():
                 response = requests.get('http://localhost:5001/api/device_state')
                 if response.status_code == 200:
                     device_state = response.json()
                     for key, state in device_state.items():
                         if state == "pressed":
-                            handle_key_event(None, key, True)
+                            handle_key_event(deck, key, True)
                         else:
-                            handle_key_event(None, key, False)
+                            handle_key_event(deck, key, False)
                 time.sleep(0.1)
-            except KeyboardInterrupt:
-                stop_flag.set()
-            except requests.exceptions.RequestException as e:
-                logging.error(f"RequestException: {e}")
-                time.sleep(1)
+        except KeyboardInterrupt:
+            stop_flag.set()
+        finally:
+            deck.reset()
+            deck.close()
     else:
         logging.error("No StreamDeck device connected.")
 
