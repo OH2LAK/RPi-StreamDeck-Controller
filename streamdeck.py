@@ -106,7 +106,7 @@ def load_button_mappings(device_id, button_count):
     conn.close()
     return button_mappings
 
-def update_button_images(deck, button_mappings, font):
+def update_button_images(button_mappings, font):
     for mapping in button_mappings:
         key = mapping['key']
         text = mapping['text']
@@ -114,8 +114,8 @@ def update_button_images(deck, button_mappings, font):
             'bg_color': mapping['bg_color'],
             'text_color': mapping['text_color']
         }
-        image = create_image(deck.key_image_format()['size'], text, style, font)
-        deck.set_key_image(key, image)
+        image = create_image((72, 72), text, style, font)
+        images[key] = image
 
 def handle_key_event(deck, key, state):
     if state:
@@ -137,29 +137,25 @@ def main():
         font = ImageFont.truetype("Roboto-Medium.ttf", 14)
 
         button_mappings = load_button_mappings(device_info['serial_number'], device_info['button_count'])
+        update_button_images(button_mappings, font)
 
-        # Access the actual StreamDeck device
-        decks = DeviceManager.DeviceManager().enumerate()
-        if not decks:
-            logging.error("No StreamDeck devices found.")
-            return
-        deck = decks[0]
-        deck.open()
-        deck.reset()
-        deck.set_brightness(30)
-
-        update_button_images(deck, button_mappings, font)
-
-        deck.set_key_callback(handle_key_event)
-
-        try:
-            while not stop_flag.is_set():
+        # Fetch the device state and update images through device_service.py
+        while not stop_flag.is_set():
+            try:
+                response = requests.get('http://localhost:5001/api/device_state')
+                if response.status_code == 200:
+                    device_state = response.json()
+                    for key, state in device_state.items():
+                        if state == "pressed":
+                            handle_key_event(None, key, True)
+                        else:
+                            handle_key_event(None, key, False)
                 time.sleep(0.1)
-        except KeyboardInterrupt:
-            stop_flag.set()
-        finally:
-            deck.reset()
-            deck.close()
+            except KeyboardInterrupt:
+                stop_flag.set()
+            except requests.exceptions.RequestException as e:
+                logging.error(f"RequestException: {e}")
+                time.sleep(1)
     else:
         logging.error("No StreamDeck device connected.")
 
