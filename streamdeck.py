@@ -148,6 +148,7 @@ def main():
                 response = requests.get('http://localhost:5001/api/device_state')
                 if response.status_code == 200:
                     device_state = response.json()
+                    logging.debug(f"Device state: {device_state}")  # Add logging to verify device state
                     for key, state in device_state.items():
                         if state == "pressed":
                             handle_key_event(key, True)

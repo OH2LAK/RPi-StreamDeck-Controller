@@ -39,6 +39,7 @@ def device_state():
         deck.open()
         key_states = deck.key_states()
         state = {key: 'pressed' if key_states[key] else 'released' for key in range(deck.key_count())}
+        app.logger.debug(f'Key states: {state}')  # Add logging to verify key states
         deck.close()
         return jsonify(state)
     except TransportError as e:
@@ -46,4 +47,4 @@ def device_state():
         return jsonify({'error': 'Could not open StreamDeck device'}), 500
 
 if __name__ == '__main__':
-    app.run(host='127.0.0.1', port=5001)
+    app.run(host='0.0.0.0', port=5001)
