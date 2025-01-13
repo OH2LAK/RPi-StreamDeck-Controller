@@ -1,12 +1,8 @@
 from flask import Flask, render_template, request, redirect, url_for
 import sqlite3
-import redis
 import json
 
 app = Flask(__name__)
-
-# Configure Redis
-redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
 
 def get_db_connection():
     conn = sqlite3.connect('streamdeck.db')
@@ -19,17 +15,15 @@ def execute_db_query(query, args=()):
     conn.commit()
     conn.close()
 
-def send_update_signal():
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.connect(('localhost', 65432))
-        s.sendall(b'update')
-
 def get_connected_device():
-    pubsub = redis_client.pubsub()
-    pubsub.subscribe('device_info_channel')
-    for message in pubsub.listen():
-        if message['type'] == 'message':
-            return json.loads(message['data'])
+    try:
+        response = requests.get('http://localhost:5001/api/device_info')
+        if response.status_code == 200:
+            return response.json()
+        else:
+            print(f"Error fetching device info: {response.status_code} {response.text}")
+    except requests.exceptions.RequestException as e:
+        print(f"RequestException: {e}")
     return None
 
 @app.route('/')
@@ -60,7 +54,6 @@ def add_style():
 
         execute_db_query('INSERT INTO styles (name, bg_color, text_color, highlight_bg_color, highlight_text_color) VALUES (?, ?, ?, ?, ?)',
                          (name, bg_color, text_color, highlight_bg_color, highlight_text_color))
-        send_update_signal()
         return redirect(url_for('index'))
 
     return render_template('add_style.html')
@@ -79,7 +72,6 @@ def edit_style(id):
 
         execute_db_query('UPDATE styles SET bg_color = ?, text_color = ?, highlight_bg_color = ?, highlight_text_color = ? WHERE id = ?',
                          (bg_color, text_color, highlight_bg_color, highlight_text_color, id))
-        send_update_signal()
         return redirect(url_for('index'))
 
     return render_template('edit_style.html', style=style)
