@@ -8,7 +8,6 @@ import threading
 import socket
 import netifaces
 import requests
-from flask import Flask, jsonify
 import logging
 from StreamDeck import DeviceManager
 from StreamDeck.Transport.Transport import TransportError
@@ -26,8 +25,6 @@ long_press_ack_keys = set()  # Track keys that are in long press acknowledgment 
 
 # Flag for stopping the main loop
 stop_flag = threading.Event()
-
-app = Flask(__name__)
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -140,7 +137,13 @@ def main():
     if device_info:
         logging.info(f"Connected to {device_info['model']} with {device_info['button_count']} buttons.")
         font = ImageFont.truetype("Roboto-Medium.ttf", 14)
-        deck = DeviceManager.DeviceManager().enumerate()[0]
+        
+        # Access the actual StreamDeck device
+        decks = DeviceManager.DeviceManager().enumerate()
+        if not decks:
+            logging.error("No StreamDeck devices found.")
+            return
+        deck = decks[0]
         deck.open()
         deck.reset()
         deck.set_brightness(30)
